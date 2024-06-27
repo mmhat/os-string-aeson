@@ -1,0 +1,87 @@
+cabal-version:      3.0
+name:               os-string-aeson
+version:            1.0.0
+description:
+  Please see the README on Github at <https://github.com/mmhat/os-string-aeson#readme>
+
+homepage:           https://github.com/mmhat/os-string-aeson#readme
+bug-reports:        https://github.com/mmhat/os-string-aeson/issues
+author:             Dominik Peteler
+maintainer:         hackage+os-string-aeson@with-h.at
+copyright:          2024 Dominik Peteler
+license:            BSD-3-Clause
+license-file:       LICENSE
+build-type:         Simple
+extra-source-files:
+  ChangeLog.md
+  LICENSE
+  README.md
+  src/System/OsString/Include.hs
+  test/Include.hs
+
+common language
+  default-extensions:
+    CPP
+    ImportQualifiedPost
+
+  ghc-options:
+    -Wall -Wcompat -Widentities -Wincomplete-record-updates
+    -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
+
+  default-language:   Haskell2010
+
+common rts
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+
+library
+  import:          language
+  hs-source-dirs:  src/
+  build-depends:
+    , aeson                     >=1.0.0.0
+    , base                      >=4.16    && <4.21
+    , exceptions
+    , os-string                 >=2.0.0
+    , os-string-aeson-internal
+    , text
+
+  -- cabal-fmt: expand src/ -System.OsString.Aeson.Include
+  exposed-modules:
+    System.OsString.Aeson
+    System.OsString.Aeson.Posix
+    System.OsString.Aeson.Windows
+
+library os-string-aeson-internal
+  import:          language
+  visibility:      public
+  hs-source-dirs:  os-string-aeson-internal/
+  build-depends:   base >=4.16 && <4.21
+
+  -- cabal-fmt: expand os-string-aeson-internal/
+  exposed-modules: System.OsString.Aeson.Types
+
+test-suite test
+  import:         language
+  import:         rts
+  type:           exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is:        Main.hs
+  build-depends:
+    , aeson
+    , base
+    , deepseq
+    , hedgehog
+    , os-string
+    , os-string-aeson
+    , tasty
+    , tasty-hedgehog
+    , tasty-hunit
+    , tasty-rerun
+
+  -- cabal-fmt: expand test/ -Include -Main
+  other-modules:
+    Posix
+    Windows
+
+source-repository head
+  type:     git
+  location: https://github.com/mmhat/os-string-aeson

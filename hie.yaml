@@ -1,0 +1,10 @@
+cradle:
+  cabal:
+    - path: "./src/"
+      component: "lib:os-string-aeson"
+
+    - path: "./os-string-aeson-internal/"
+      component: "os-string-aeson:lib:os-string-aeson-internal"
+
+    - path: "./test"
+      component: "os-string-aeson:test:test"
