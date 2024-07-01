@@ -1,4 +1,5 @@
 #define PLATFORM_NAME          Posix
+#define PLATFORM_NAME_DOUBLE   "Posix"
 #define PLATFORM_STRING        PosixString
 #define PLATFORM_STRING_SINGLE 'PosixString'
 #define PLATFORM_STRING_DOUBLE "PosixString"

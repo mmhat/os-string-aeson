@@ -1,4 +1,5 @@
 #define PLATFORM_NAME          Windows
+#define PLATFORM_NAME_DOUBLE   "Windows"
 #define PLATFORM_STRING        WindowsString
 #define PLATFORM_STRING_SINGLE 'WindowsString'
 #define PLATFORM_STRING_DOUBLE "WindowsString"

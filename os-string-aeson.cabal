@@ -16,6 +16,7 @@ extra-source-files:
   ChangeLog.md
   LICENSE
   README.md
+  src/System/OsString/Aeson/Include.hs
   src/System/OsString/Include.hs
   test/Include.hs
 
@@ -40,6 +41,7 @@ library
     , aeson                     >=1.0.0.0
     , base                      >=4.16    && <4.21
     , exceptions
+    , newtype
     , os-string                 >=2.0.0
     , os-string-aeson-internal
     , text
@@ -54,7 +56,9 @@ library os-string-aeson-internal
   import:          language
   visibility:      public
   hs-source-dirs:  os-string-aeson-internal/
-  build-depends:   base >=4.16 && <4.21
+  build-depends:
+    , base     >=4.16 && <4.21
+    , newtype
 
   -- cabal-fmt: expand os-string-aeson-internal/
   exposed-modules: System.OsString.Aeson.Types
