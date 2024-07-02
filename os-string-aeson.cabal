@@ -20,6 +20,15 @@ extra-source-files:
   src/System/OsString/Include.hs
   test/Include.hs
 
+tested-with:
+  GHC ==8.10.7
+   || ==9.0.2
+   || ==9.2.8
+   || ==9.4.8
+   || ==9.6.5
+   || ==9.8.2
+   || ==9.10.1
+
 common language
   default-extensions:
     CPP

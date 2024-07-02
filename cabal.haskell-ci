@@ -1,0 +1,11 @@
+branches:       main
+
+doctest:        <9.9
+
+tests:          True
+benchmarks:     True
+
+ghcup-jobs:     True
+jobs-selection: any
+
+installed:      -all
