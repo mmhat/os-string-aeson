@@ -17,7 +17,6 @@ extra-source-files:
   LICENSE
   README.md
   src/System/OsString/Aeson/Include.hs
-  src/System/OsString/Include.hs
   test/Include.hs
 
 tested-with:
