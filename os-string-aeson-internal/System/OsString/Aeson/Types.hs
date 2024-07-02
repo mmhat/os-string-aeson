@@ -1,36 +1,52 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE ExplicitForAll #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TypeFamilies #-}
 
 module System.OsString.Aeson.Types where
 
-import Control.Newtype (Newtype (..))
 import Data.Kind (Type)
 import Data.Typeable (Typeable)
 import System.IO (TextEncoding, utf16le, utf8)
 
-type family EncodingTag a :: Type
-
-newtype AsBinary a = AsBinary {asBinary :: a}
+newtype As (t :: Tag l) a = As {unAs :: a}
     deriving (Eq, Foldable, Functor, Show, Traversable)
 
-instance Newtype (AsBinary a) a
+data Level
+    = Nested
+    | TopLevel
 
-type instance EncodingTag (AsBinary a) = ()
+data Tag :: Level -> Type where
+    Binary :: Tag a
+    Text :: (enc :: Type) -> Tag a
+    Tagged :: Tag 'Nested -> Tag 'TopLevel
 
-newtype AsText encoding a = AsText {asText :: a}
-    deriving (Eq, Foldable, Functor, Show, Traversable)
+pattern AsBinary :: a -> As 'Binary a
+pattern AsBinary x = As x
+{-# COMPLETE AsBinary #-}
 
-instance Newtype (AsText encoding a) a
+pattern AsText :: forall enc a. a -> As ('Text enc) a
+pattern AsText x = As x
+{-# COMPLETE AsText #-}
 
-type instance EncodingTag (AsText encoding a) = encoding
+pattern AsTaggedBinary :: a -> As ('Tagged 'Binary) a
+pattern AsTaggedBinary x = As x
+{-# COMPLETE AsTaggedBinary #-}
 
-newtype Tagged a = Tagged {tagged :: a}
-    deriving (Eq, Foldable, Functor, Show, Traversable)
+pattern AsTaggedText :: forall enc a. a -> As ('Tagged ('Text enc)) a
+pattern AsTaggedText x = As x
+{-# COMPLETE AsTaggedText #-}
 
-instance Newtype (Tagged a) a
+type family TagEncoding (t :: Tag l) :: Type where
+    TagEncoding 'Binary = ()
+    TagEncoding ('Text enc) = enc
+    TagEncoding ('Tagged t') = TagEncoding t'
 
 class (Typeable a) => IsTextEncoding a where
     textEncoding :: TextEncoding

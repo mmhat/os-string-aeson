@@ -5,6 +5,7 @@
 
 #define PLATFORM_NAME_DOUBLE " ## PLATFORM_NAME ## "
 
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 
@@ -55,14 +56,14 @@ prop_instances_roundtripUnicode =
 
 roundtripFunctions
     :: Gen PLATFORM_STRING
-    -> (Value -> Parser PLATFORM_STRING)
-    -> (PLATFORM_STRING -> Value)
+    -> (Value -> Parser (As t PLATFORM_STRING))
+    -> (As t PLATFORM_STRING -> Value)
     -> Property
 roundtripFunctions gen decode encode = property $ do
     string <- forAll gen
     let
-        actual = Aeson.parseMaybe (decode . encode) string
-        expected = Just string
+        actual = Aeson.parseMaybe (decode . encode) (As string)
+        expected = Just (As string)
     actual === expected
 
 roundtripInstances

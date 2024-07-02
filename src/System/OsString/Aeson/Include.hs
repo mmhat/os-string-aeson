@@ -10,10 +10,13 @@
 --     PLATFORM_UTF_CODEC = UTF8 | UTF16-LE
 --     IS_WINDOWS = 0 | 1
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
@@ -98,9 +101,9 @@ module System.OsString.Aeson.PLATFORM_NAME (
 
     -- * Conversion using newtype wrappers
     -- $newtypes
-    AsBinary (..),
-    AsText (..),
-    Tagged (..),
+    As (As, AsBinary, AsText, AsTaggedBinary, AsTaggedText),
+    Tag (..),
+    Level (..),
 
     -- * Text encodings
     TextEncoding,
@@ -159,8 +162,10 @@ defaultParseJSON
     :: Value
     -> Parser PLATFORM_STRING
 defaultParseJSON value =
-    fromTagged @Unicode (fromText @Unicode) value
-        <|> fromTagged @() fromBinary value
+    ( coerce @(As ('Tagged ('Text Unicode)) PLATFORM_STRING)
+        <$> fromTagged fromText value
+    )
+        <|> (coerce <$> fromTagged fromBinary value)
 {-# INLINE defaultParseJSON #-}
 
 defaultToJSON
@@ -168,8 +173,8 @@ defaultToJSON
     -> Value
 defaultToJSON x =
     fromMaybe
-        (toTagged @() toBinary x)
-        (toTaggedM @Unicode (toText @Unicode) x)
+        (toTagged toBinary (AsTaggedBinary x))
+        (toTaggedM toText (AsTaggedText @Unicode x))
 {-# INLINE defaultToJSON #-}
 
 defaultToEncoding
@@ -177,8 +182,8 @@ defaultToEncoding
     -> Encoding
 defaultToEncoding x =
     fromMaybe
-        (toTaggedEncoding @() toBinaryEncoding x)
-        (toTaggedEncodingM @Unicode (toTextEncoding @Unicode) x)
+        (toTaggedEncoding toBinaryEncoding (AsTaggedBinary x))
+        (toTaggedEncodingM toTextEncoding (AsTaggedText @Unicode x))
 {-# INLINE defaultToEncoding #-}
 
 ----------------------------------------
@@ -187,29 +192,40 @@ defaultToEncoding x =
 
 fromBinary
     :: Value
-    -> Parser PLATFORM_STRING
+    -> Parser
+        ( As
+            'Binary
+            PLATFORM_STRING
+        )
 fromBinary value =
-    OsString.pack
+    As
+        . OsString.pack
         . coerce @[PLATFORM_WORD] @[PLATFORM_CHAR]
         <$> parseJSON value
 {-# INLINE fromBinary #-}
 
 toBinary
-    :: PLATFORM_STRING
+    :: As
+        'Binary
+        PLATFORM_STRING
     -> Value
 toBinary =
     toJSON
         . coerce @[PLATFORM_CHAR] @[PLATFORM_WORD]
         . OsString.unpack
+        . unAs
 {-# INLINE toBinary #-}
 
 toBinaryEncoding
-    :: PLATFORM_STRING
+    :: As
+        'Binary
+        PLATFORM_STRING
     -> Encoding
 toBinaryEncoding =
     toEncoding
         . coerce @[PLATFORM_CHAR] @[PLATFORM_WORD]
         . OsString.unpack
+        . unAs
 {-# INLINE toBinaryEncoding #-}
 
 ----------------------------------------
@@ -220,8 +236,12 @@ fromText
     :: forall enc
      . (IsTextEncoding enc)
     => Value
-    -> Parser PLATFORM_STRING
-fromText = fromTextWith (textEncoding @enc)
+    -> Parser
+        ( As
+            ('Text enc)
+            PLATFORM_STRING
+        )
+fromText = fmap As . fromTextWith (textEncoding @enc)
 {-# INLINE fromText #-}
 
 fromTextWith
@@ -234,9 +254,11 @@ fromTextWith enc = unsafeEncodeWith enc <=< parseJSON
 toText
     :: forall enc m
      . (IsTextEncoding enc, MonadThrow m)
-    => PLATFORM_STRING
+    => As
+        ('Text enc)
+        PLATFORM_STRING
     -> m Value
-toText = toTextWith (textEncoding @enc)
+toText = toTextWith (textEncoding @enc) . unAs
 {-# INLINE toText #-}
 
 toTextWith
@@ -251,9 +273,11 @@ toTextWith enc =
 unsafeToText
     :: forall enc
      . (IsTextEncoding enc)
-    => PLATFORM_STRING
+    => As
+        ('Text enc)
+        PLATFORM_STRING
     -> Value
-unsafeToText = unsafeToTextWith (textEncoding @enc)
+unsafeToText = unsafeToTextWith (textEncoding @enc) . unAs
 {-# INLINE unsafeToText #-}
 
 unsafeToTextWith
@@ -267,9 +291,11 @@ unsafeToTextWith enc =
 toTextEncoding
     :: forall enc m
      . (IsTextEncoding enc, MonadThrow m)
-    => PLATFORM_STRING
+    => As
+        ('Text enc)
+        PLATFORM_STRING
     -> m Encoding
-toTextEncoding = toTextEncodingWith (textEncoding @enc)
+toTextEncoding = toTextEncodingWith (textEncoding @enc) . unAs
 {-# INLINE toTextEncoding #-}
 
 toTextEncodingWith
@@ -284,9 +310,11 @@ toTextEncodingWith enc =
 unsafeToTextEncoding
     :: forall enc
      . (IsTextEncoding enc)
-    => PLATFORM_STRING
+    => As
+        ('Text enc)
+        PLATFORM_STRING
     -> Encoding
-unsafeToTextEncoding = unsafeToTextEncodingWith (textEncoding @enc)
+unsafeToTextEncoding = unsafeToTextEncodingWith (textEncoding @enc) . unAs
 {-# INLINE unsafeToTextEncoding #-}
 
 unsafeToTextEncodingWith
@@ -302,48 +330,101 @@ unsafeToTextEncodingWith enc =
 ----------------------------------------
 
 fromTagged
-    :: forall enc
-     . (Typeable enc)
-    => (Value -> Parser PLATFORM_STRING)
+    :: forall (t :: Tag 'Nested)
+     . (Typeable t, Typeable (TagEncoding t))
+    => (Value -> Parser (As t PLATFORM_STRING))
     -> Value
-    -> Parser PLATFORM_STRING
-fromTagged = fromTagged' @enc
+    -> Parser
+        ( As
+            ('Tagged t)
+            PLATFORM_STRING
+        )
+fromTagged decode = Aeson.withObject name $ \obj -> do
+    platform <- obj .: "platform"
+    guard (platform == (PLATFORM_NAME_DOUBLE :: Text))
+    encoding <- obj .: "encoding"
+    guard (encoding == show (typeRep @(TagEncoding t)))
+    mkTagged <$> (decode =<< (obj .: "payload"))
+    where
+        name =
+            show
+                ( typeRep
+                    @( As
+                        ('Tagged t)
+                        PLATFORM_STRING
+                     )
+                )
 {-# INLINE fromTagged #-}
 
 toTagged
-    :: forall enc
-     . (Typeable enc)
-    => (PLATFORM_STRING -> Value)
-    -> PLATFORM_STRING
+    :: forall (t :: Tag 'Nested)
+     . (Typeable (TagEncoding t))
+    => (As t PLATFORM_STRING -> Value)
+    -> As
+        ('Tagged t)
+        PLATFORM_STRING
     -> Value
-toTagged encode path = taggedAs' @enc (encode path)
+toTagged encode x =
+    let
+        payload = (encode . coerce) x
+    in
+        Aeson.object
+            [ "platform" .= (PLATFORM_NAME_DOUBLE :: Text)
+            , "encoding" .= show (typeRep @(TagEncoding t))
+            , "payload" .= payload
+            ]
 {-# INLINE toTagged #-}
 
 toTaggedM
-    :: forall enc m
-     . (MonadThrow m, Typeable enc)
-    => (PLATFORM_STRING -> m Value)
-    -> PLATFORM_STRING
+    :: forall (t :: Tag 'Nested) m
+     . (MonadThrow m, Typeable (TagEncoding t))
+    => (As t PLATFORM_STRING -> m Value)
+    -> As
+        ('Tagged t)
+        PLATFORM_STRING
     -> m Value
-toTaggedM encode path = taggedAs' @enc <$> encode path
+toTaggedM encode x = do
+    payload <- (encode . coerce) x
+    pure . Aeson.object $
+        [ "platform" .= (PLATFORM_NAME_DOUBLE :: Text)
+        , "encoding" .= show (typeRep @(TagEncoding t))
+        , "payload" .= payload
+        ]
 {-# INLINE toTaggedM #-}
 
 toTaggedEncoding
-    :: forall enc
-     . (Typeable enc)
-    => (PLATFORM_STRING -> Encoding)
-    -> PLATFORM_STRING
+    :: forall (t :: Tag 'Nested)
+     . (Typeable (TagEncoding t))
+    => (As t PLATFORM_STRING -> Encoding)
+    -> As
+        ('Tagged t)
+        PLATFORM_STRING
     -> Encoding
-toTaggedEncoding encode path = taggedAsEncoding @enc (encode path)
+toTaggedEncoding encode x =
+    let
+        payload = (encode . coerce) x
+    in
+        Aeson.pairs
+            ( "platform" .= (PLATFORM_NAME_DOUBLE :: Text)
+                <> "encoding" .= show (typeRep @(TagEncoding t))
+                <> Aeson.pair "payload" payload
+            )
 {-# INLINE toTaggedEncoding #-}
 
 toTaggedEncodingM
-    :: forall enc m
-     . (MonadThrow m, Typeable enc)
-    => (PLATFORM_STRING -> m Encoding)
-    -> PLATFORM_STRING
+    :: forall (t :: Tag 'Nested) m
+     . (MonadThrow m, Typeable (TagEncoding t))
+    => (As t PLATFORM_STRING -> m Encoding)
+    -> As
+        ('Tagged t)
+        PLATFORM_STRING
     -> m Encoding
-toTaggedEncodingM encode path = taggedAsEncoding @enc <$> encode path
+toTaggedEncodingM encode x = do
+    payload <- (encode . coerce) x
+    pure . Aeson.pairs $
+        "platform" .= (PLATFORM_NAME_DOUBLE :: Text)
+            <> "encoding" .= show (typeRep @(TagEncoding t))
+            <> Aeson.pair "payload" payload
 {-# INLINE toTaggedEncodingM #-}
 
 --------------------------------------------------------------------------------
@@ -352,19 +433,43 @@ toTaggedEncodingM encode path = taggedAsEncoding @enc <$> encode path
 
 -- | This instance tries to decode a PLATFORM_STRING_SINGLE using the
 -- PLATFORM_UTF_CODEC encoding. If decoding fails a runtime error will be thrown.
-deriving via (AsText Unicode PLATFORM_STRING) instance FromJSON PLATFORM_STRING
+deriving via
+    ( As
+        ('Text Unicode)
+        PLATFORM_STRING
+    )
+    instance
+        FromJSON PLATFORM_STRING
 
 -- | This instance assumes that PLATFORM_STRING_SINGLE is PLATFORM_UTF_CODEC
 -- encoded. If encoding fails a runtime error will be thrown.
-deriving via (AsText Unicode PLATFORM_STRING) instance ToJSON PLATFORM_STRING
+deriving via
+    ( As
+        ('Text Unicode)
+        PLATFORM_STRING
+    )
+    instance
+        ToJSON PLATFORM_STRING
 
 -- | This instance tries to decode a PLATFORM_STRING_SINGLE using the
 -- PLATFORM_UTF_CODEC encoding. If decoding fails a runtime error will be thrown.
-deriving via (AsText Unicode PLATFORM_STRING) instance FromJSONKey PLATFORM_STRING
+deriving via
+    ( As
+        ('Text Unicode)
+        PLATFORM_STRING
+    )
+    instance
+        FromJSONKey PLATFORM_STRING
 
 -- | This instance assumes that PLATFORM_STRING_SINGLE is PLATFORM_UTF_CODEC
 -- encoded. If encoding fails a runtime error will be thrown.
-deriving via (AsText Unicode PLATFORM_STRING) instance ToJSONKey PLATFORM_STRING
+deriving via
+    ( As
+        ('Text Unicode)
+        PLATFORM_STRING
+    )
+    instance
+        ToJSONKey PLATFORM_STRING
 
 --------------------------------------------------------------------------------
 -- Instances for newtype wrappers
@@ -391,21 +496,45 @@ deriving via (AsText Unicode PLATFORM_STRING) instance ToJSONKey PLATFORM_STRING
 -- Binary
 ----------------------------------------
 
-instance FromJSON (AsBinary PLATFORM_STRING) where
-    parseJSON value = AsBinary <$> fromBinary value
+instance
+    FromJSON
+        ( As
+            'Binary
+            PLATFORM_STRING
+        )
+    where
+    parseJSON = fromBinary
     {-# INLINE parseJSON #-}
 
-instance ToJSON (AsBinary PLATFORM_STRING) where
-    toJSON = toBinary . asBinary
+instance
+    ToJSON
+        ( As
+            'Binary
+            PLATFORM_STRING
+        )
+    where
+    toJSON = toBinary
     {-# INLINE toJSON #-}
-    toEncoding = toBinaryEncoding . asBinary
+    toEncoding = toBinaryEncoding
     {-# INLINE toEncoding #-}
 
-instance FromJSONKey (AsBinary PLATFORM_STRING) where
+instance
+    FromJSONKey
+        ( As
+            'Binary
+            PLATFORM_STRING
+        )
+    where
     fromJSONKey = Aeson.FromJSONKeyValue parseJSON
     {-# INLINE fromJSONKey #-}
 
-instance ToJSONKey (AsBinary PLATFORM_STRING) where
+instance
+    ToJSONKey
+        ( As
+            'Binary
+            PLATFORM_STRING
+        )
+    where
     toJSONKey = Aeson.ToJSONKeyValue toJSON toEncoding
     {-# INLINE toJSONKey #-}
 
@@ -413,65 +542,103 @@ instance ToJSONKey (AsBinary PLATFORM_STRING) where
 -- Text
 ----------------------------------------
 
-instance (IsTextEncoding enc) => FromJSON (AsText enc PLATFORM_STRING) where
-    parseJSON value = AsText <$> fromText @enc value
+instance
+    (IsTextEncoding enc)
+    => FromJSON
+        ( As
+            ('Text enc)
+            PLATFORM_STRING
+        )
+    where
+    parseJSON = fromText
     {-# INLINE parseJSON #-}
 
-instance (IsTextEncoding enc) => ToJSON (AsText enc PLATFORM_STRING) where
-    toJSON = unsafeToText @enc . asText
+instance
+    (IsTextEncoding enc)
+    => ToJSON
+        ( As
+            ('Text enc)
+            PLATFORM_STRING
+        )
+    where
+    toJSON = unsafeToText
     {-# INLINE toJSON #-}
-    toEncoding = unsafeToTextEncoding @enc . asText
+    toEncoding = unsafeToTextEncoding
     {-# INLINE toEncoding #-}
 
-instance (IsTextEncoding enc) => FromJSONKey (AsText enc PLATFORM_STRING) where
+instance
+    (IsTextEncoding enc)
+    => FromJSONKey
+        ( As
+            ('Text enc)
+            PLATFORM_STRING
+        )
+    where
     fromJSONKey =
         Aeson.FromJSONKeyTextParser
-            (fmap AsText . unsafeEncodeWith (textEncoding @enc) . Text.unpack)
+            (fmap As . unsafeEncodeWith (textEncoding @enc) . Text.unpack)
     {-# INLINE fromJSONKey #-}
 
-instance (IsTextEncoding enc) => ToJSONKey (AsText enc PLATFORM_STRING) where
+instance
+    (IsTextEncoding enc)
+    => ToJSONKey
+        ( As
+            ('Text enc)
+            PLATFORM_STRING
+        )
+    where
     toJSONKey =
         Aeson.toJSONKeyText
-            (Text.pack . unsafeDecodeWith (textEncoding @enc) . asText)
+            (Text.pack . unsafeDecodeWith (textEncoding @enc) . unAs)
     {-# INLINE toJSONKey #-}
 
 ----------------------------------------
 -- Tagged
 ----------------------------------------
 
-instance (FromJSON (AsBinary a)) => FromJSON (Tagged (AsBinary a)) where
-    parseJSON value = Tagged <$> fromTagged' @() parseJSON value
+instance
+    (FromJSON (As t PLATFORM_STRING), Typeable t, Typeable (TagEncoding t))
+    => FromJSON
+        ( As
+            ('Tagged t)
+            PLATFORM_STRING
+        )
+    where
+    parseJSON = fromTagged parseJSON
     {-# INLINE parseJSON #-}
 
-instance (IsTextEncoding enc, FromJSON (AsText enc a)) => FromJSON (Tagged (AsText enc a)) where
-    parseJSON value = Tagged <$> fromTagged' @enc parseJSON value
-    {-# INLINE parseJSON #-}
-
-instance (ToJSON (AsBinary a)) => ToJSON (Tagged (AsBinary a)) where
-    toJSON = taggedAs . tagged
+instance
+    (ToJSON (As t PLATFORM_STRING), Typeable t, Typeable (TagEncoding t))
+    => ToJSON
+        ( As
+            ('Tagged t)
+            PLATFORM_STRING
+        )
+    where
+    toJSON = toTagged toJSON
     {-# INLINE toJSON #-}
-    toEncoding = taggedAsEncoding @() . toEncoding . tagged
+    toEncoding = toTaggedEncoding toEncoding
     {-# INLINE toEncoding #-}
 
-instance (IsTextEncoding enc, ToJSON (AsText enc a)) => ToJSON (Tagged (AsText enc a)) where
-    toJSON = taggedAs . tagged
-    {-# INLINE toJSON #-}
-    toEncoding = taggedAsEncoding @enc . toEncoding . tagged
-    {-# INLINE toEncoding #-}
-
-instance (FromJSON (AsBinary a)) => FromJSONKey (Tagged (AsBinary a)) where
+instance
+    (FromJSON (As t PLATFORM_STRING), Typeable t, Typeable (TagEncoding t))
+    => FromJSONKey
+        ( As
+            ('Tagged t)
+            PLATFORM_STRING
+        )
+    where
     fromJSONKey = Aeson.FromJSONKeyValue parseJSON
     {-# INLINE fromJSONKey #-}
 
-instance (IsTextEncoding enc, FromJSON (AsText enc a)) => FromJSONKey (Tagged (AsText enc a)) where
-    fromJSONKey = Aeson.FromJSONKeyValue parseJSON
-    {-# INLINE fromJSONKey #-}
-
-instance (ToJSON (AsBinary a)) => ToJSONKey (Tagged (AsBinary a)) where
-    toJSONKey = Aeson.ToJSONKeyValue toJSON toEncoding
-    {-# INLINE toJSONKey #-}
-
-instance (IsTextEncoding enc, ToJSON (AsText enc a)) => ToJSONKey (Tagged (AsText enc a)) where
+instance
+    (ToJSON (As t PLATFORM_STRING), Typeable t, Typeable (TagEncoding t))
+    => ToJSONKey
+        ( As
+            ('Tagged t)
+            PLATFORM_STRING
+        )
+    where
     toJSONKey = Aeson.ToJSONKeyValue toJSON toEncoding
     {-# INLINE toJSONKey #-}
 
@@ -497,53 +664,13 @@ unicode = utf8
 -- Internal helpers
 --------------------------------------------------------------------------------
 
-fromTagged'
-    :: forall enc a
-     . (Typeable enc)
-    => (Value -> Parser a)
-    -> Value
-    -> Parser a
-fromTagged' decode = Aeson.withObject name $
-    \obj -> do
-        platform <- obj .: "platform"
-        guard (platform == (PLATFORM_NAME_DOUBLE :: Text))
-        encoding <- obj .: "encoding"
-        guard (encoding == show (typeRep @enc))
-        decode =<< (obj .: "payload")
-    where
-        name =
-            "Tagged "
-                <> PLATFORM_STRING_DOUBLE
-                <> " "
-                <> show (typeRep @enc)
-{-# INLINE fromTagged' #-}
-
-taggedAs :: forall a. (ToJSON a, Typeable (EncodingTag a)) => a -> Value
-taggedAs x =
-    Aeson.object
-        [ "platform" .= (PLATFORM_NAME_DOUBLE :: Text)
-        , "encoding" .= show (typeRep @(EncodingTag a))
-        , "payload" .= x
-        ]
-{-# INLINE taggedAs #-}
-
-taggedAs' :: forall enc. (Typeable enc) => Value -> Value
-taggedAs' value =
-    Aeson.object
-        [ "platform" .= (PLATFORM_NAME_DOUBLE :: Text)
-        , "encoding" .= show (typeRep @enc)
-        , "payload" .= value
-        ]
-{-# INLINE taggedAs' #-}
-
-taggedAsEncoding :: forall enc. (Typeable enc) => Encoding -> Encoding
-taggedAsEncoding payload =
-    Aeson.pairs
-        ( "platform" .= (PLATFORM_NAME_DOUBLE :: Text)
-            <> "encoding" .= show (typeRep @enc)
-            <> Aeson.pair "payload" payload
-        )
-{-# INLINE taggedAsEncoding #-}
+mkTagged
+    :: As t PLATFORM_STRING
+    -> As
+        ('Tagged t)
+        PLATFORM_STRING
+mkTagged = coerce
+{-# INLINE mkTagged #-}
 
 unsafeDecodeWith
     :: TextEncoding
