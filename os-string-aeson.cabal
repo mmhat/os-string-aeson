@@ -1,9 +1,11 @@
 cabal-version: 3.0
 name: os-string-aeson
 version: 1.0.0
+synopsis: Aeson instances for the os-string package
 description:
   Please see the README on Github at <https://github.com/mmhat/os-string-aeson#readme>
 
+category: JSON
 homepage: https://github.com/mmhat/os-string-aeson#readme
 bug-reports: https://github.com/mmhat/os-string-aeson/issues
 author: Dominik Peteler
@@ -14,11 +16,14 @@ license-file: LICENSE
 build-type: Simple
 -- cabal-gild: discover --include=**/Include.hs
 extra-source-files:
+  src/System/OsString/Aeson/Include.hs
+  test/Include.hs
+
+-- cabal-gild: discover --include=LICENSE --include=**/*.md
+extra-doc-files:
   ChangeLog.md
   LICENSE
   README.md
-  src/System/OsString/Aeson/Include.hs
-  test/Include.hs
 
 tested-with:
   ghc ==8.10.7 || ==9.0.2 || ==9.2.8 || ==9.4.8 || ==9.6.5 || ==9.8.2 || ==9.10.1
@@ -49,12 +54,12 @@ library
   import: language
   hs-source-dirs: src/
   build-depends:
-    aeson >=1.0.0.0,
+    aeson >=1.0.0.0 && <2.3,
     base >=4.14 && <4.21,
-    exceptions,
-    os-string >=2.0.0,
+    exceptions >=0.4 && <0.11,
+    os-string >=2.0.0 && <2.1,
     os-string-aeson-internal,
-    text,
+    text >=0.1 && <2.2,
 
   -- cabal-gild: discover ./src/ --exclude=**/Include.hs
   exposed-modules:
