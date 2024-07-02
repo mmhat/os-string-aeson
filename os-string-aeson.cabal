@@ -17,7 +17,8 @@ build-type: Simple
 -- cabal-gild: discover --include=**/Include.hs
 extra-source-files:
   src/System/OsString/Aeson/Include.hs
-  test/Include.hs
+  test/Properties/Include.hs
+  test/Units/Include.hs
 
 -- cabal-gild: discover --include=LICENSE --include=**/*.md
 extra-doc-files:
@@ -86,6 +87,7 @@ test-suite test
     aeson,
     base,
     deepseq,
+    exceptions,
     hedgehog,
     os-string,
     os-string-aeson,
@@ -93,11 +95,14 @@ test-suite test
     tasty-hedgehog,
     tasty-hunit,
     tasty-rerun,
+    text,
 
   -- cabal-gild: discover ./test/ --exclude=test/Main.hs --exclude=**/Include.hs
   other-modules:
-    Posix
-    Windows
+    Properties.Posix
+    Properties.Windows
+    Units.Posix
+    Units.Windows
 
 source-repository head
   type: git

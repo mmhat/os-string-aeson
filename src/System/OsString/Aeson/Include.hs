@@ -104,6 +104,7 @@ module System.OsString.Aeson.PLATFORM_NAME (
     As (As, AsBinary, AsText, AsTaggedBinary, AsTaggedText),
     Tag (..),
     Level (..),
+    TagEncoding,
 
     -- * Text encodings
     TextEncoding,

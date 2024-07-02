@@ -11,8 +11,10 @@ import Test.Tasty (
  )
 import Test.Tasty.Ingredients.Rerun (rerunningTests)
 
-import Posix qualified
-import Windows qualified
+import Properties.Posix qualified
+import Properties.Windows qualified
+import Units.Posix qualified
+import Units.Windows qualified
 
 main :: IO ()
 main = do
@@ -27,6 +29,14 @@ tests :: TestTree
 tests =
     testGroup
         "Tests"
-        [ Posix.tests
-        , Windows.tests
+        [ testGroup
+            "Posix"
+            [ Units.Posix.tests
+            , Properties.Posix.tests
+            ]
+        , testGroup
+            "Windows"
+            [ Units.Windows.tests
+            , Properties.Windows.tests
+            ]
         ]
