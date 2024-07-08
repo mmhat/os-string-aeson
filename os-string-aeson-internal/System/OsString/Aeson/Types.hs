@@ -27,35 +27,43 @@ data Tag :: Level -> Type where
     Text :: (enc :: Type) -> Tag a
     Tagged :: Tag 'Nested -> Tag 'TopLevel
 
-pattern AsBinary :: a -> As 'Binary a
+pattern AsBinary
+    :: forall {l :: Level} a
+     . a -> As ('Binary :: Tag l) a
 pattern AsBinary x = As x
 {-# COMPLETE AsBinary #-}
 
-pattern AsText :: forall enc a. a -> As ('Text enc) a
+pattern AsText
+    :: forall {l :: Level} (enc :: Type) a
+     . a -> As ('Text enc :: Tag l) a
 pattern AsText x = As x
 {-# COMPLETE AsText #-}
 
-pattern AsTaggedBinary :: a -> As ('Tagged 'Binary) a
+pattern AsTaggedBinary
+    :: forall a
+     . a -> As ('Tagged 'Binary :: Tag 'TopLevel) a
 pattern AsTaggedBinary x = As x
 {-# COMPLETE AsTaggedBinary #-}
 
-pattern AsTaggedText :: forall enc a. a -> As ('Tagged ('Text enc)) a
+pattern AsTaggedText
+    :: forall (enc :: Type) a
+     . a -> As ('Tagged ('Text enc) :: Tag 'TopLevel) a
 pattern AsTaggedText x = As x
 {-# COMPLETE AsTaggedText #-}
 
-asBinary :: As 'Binary a -> a
+asBinary :: forall a. As 'Binary a -> a
 asBinary (AsBinary x) = x
 {-# INLINE asBinary #-}
 
-asText :: forall enc a. As ('Text enc) a -> a
+asText :: forall (enc :: Type) a. As ('Text enc) a -> a
 asText (AsText x) = x
 {-# INLINE asText #-}
 
-asTaggedBinary :: As ('Tagged 'Binary) a -> a
+asTaggedBinary :: forall a. As ('Tagged 'Binary) a -> a
 asTaggedBinary (AsTaggedBinary x) = x
 {-# INLINE asTaggedBinary #-}
 
-asTaggedText :: As ('Tagged ('Text enc)) a -> a
+asTaggedText :: forall (enc :: Type) a. As ('Tagged ('Text enc)) a -> a
 asTaggedText (AsTaggedText x) = x
 {-# INLINE asTaggedText #-}
 
