@@ -34,13 +34,13 @@ tests =
             "Tagged"
             [ testTagged
                 "Binary"
-                fromBinary
+                fromBinaryAs
                 [ taggedBinary "empty" []
                 , taggedBinary "[\\NUL]" [0]
                 ]
             , testTagged
                 "Text"
-                (fromText @Unicode)
+                (fromTextAs @Unicode)
                 [ taggedText "empty" ""
                 , taggedText "\"\\NUL\"" "\NUL"
                 ]
@@ -111,10 +111,10 @@ unit_tagged_noPayload parse = testCase "no payload" $ do
     assertBool "parse should fail" (isNothing actual)
 
 taggedBinary :: TestName -> [Word] -> TestTree
-taggedBinary = taggedHelper fromBinary
+taggedBinary = taggedHelper fromBinaryAs
 
 taggedText :: TestName -> Text -> TestTree
-taggedText = taggedHelper (fromText @Unicode)
+taggedText = taggedHelper (fromTextAs @Unicode)
 
 taggedHelper
     :: forall (t :: Tag 'Nested) a

@@ -43,6 +43,22 @@ pattern AsTaggedText :: forall enc a. a -> As ('Tagged ('Text enc)) a
 pattern AsTaggedText x = As x
 {-# COMPLETE AsTaggedText #-}
 
+asBinary :: As 'Binary a -> a
+asBinary (AsBinary x) = x
+{-# INLINE asBinary #-}
+
+asText :: forall enc a. As ('Text enc) a -> a
+asText (AsText x) = x
+{-# INLINE asText #-}
+
+asTaggedBinary :: As ('Tagged 'Binary) a -> a
+asTaggedBinary (AsTaggedBinary x) = x
+{-# INLINE asTaggedBinary #-}
+
+asTaggedText :: As ('Tagged ('Text enc)) a -> a
+asTaggedText (AsTaggedText x) = x
+{-# INLINE asTaggedText #-}
+
 type family TagEncoding (t :: Tag l) :: Type where
     TagEncoding 'Binary = ()
     TagEncoding ('Text enc) = enc

@@ -38,25 +38,25 @@ prop_functions_roundtripDefault =
 
 prop_functions_roundtripBinary :: Property
 prop_functions_roundtripBinary =
-    roundtripFunctions genUnrestricted fromBinary toBinary
+    roundtripFunctions genUnrestricted fromBinaryAs toBinaryAs
 
 prop_functions_roundtripText :: Property
 prop_functions_roundtripText =
-    roundtripFunctionsM @('Text Unicode) genUnicode fromText toText
+    roundtripFunctionsM @('Text Unicode) genUnicode fromTextAs toTextAs
 
 prop_functions_roundtripTaggedBinary :: Property
 prop_functions_roundtripTaggedBinary =
     roundtripFunctions
         genUnrestricted
-        (fromTagged fromBinary)
-        (toTagged toBinary)
+        (fromTaggedAs fromBinaryAs)
+        (toTaggedAs toBinaryAs)
 
 prop_functions_roundtripTaggedText :: Property
 prop_functions_roundtripTaggedText =
     roundtripFunctionsM @('Tagged ('Text Unicode))
         genUnicode
-        (fromTagged fromText)
-        (toTaggedM toText)
+        (fromTaggedAs fromTextAs)
+        (toTaggedAsM toTextAs)
 
 prop_instances_roundtrip :: Property
 prop_instances_roundtrip =
