@@ -6,5 +6,8 @@ cradle:
     - path: "./os-string-aeson-internal/"
       component: "os-string-aeson:lib:os-string-aeson-internal"
 
+    - path: "./examples"
+      component: "os-string-aeson:test:examples"
+
     - path: "./test"
       component: "os-string-aeson:test:test"
