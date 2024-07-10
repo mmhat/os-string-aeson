@@ -15,7 +15,7 @@ import Data.Kind (Type)
 import Data.Typeable (Typeable)
 import System.IO (TextEncoding, utf16le, utf8)
 
-newtype As (t :: Tag l) a = As {unAs :: a}
+newtype As (t :: k) a = As {unAs :: a}
     deriving (Eq, Foldable, Functor, Show, Traversable)
 
 data Level
