@@ -72,7 +72,11 @@ library os-string-aeson-internal
   import: language
   visibility: public
   hs-source-dirs: os-string-aeson-internal/
-  build-depends: base >=4.14 && <4.21
+  build-depends:
+    aeson,
+    base >=4.14 && <4.21,
+    text,
+
   -- cabal-gild: discover ./os-string-aeson-internal/
   exposed-modules:
     System.OsString.Aeson.Types
@@ -85,7 +89,9 @@ test-suite examples
   main-is: Main.hs
   build-depends:
     aeson,
+    aeson-pretty,
     base,
+    bytestring,
     deepseq,
     exceptions,
     os-string,

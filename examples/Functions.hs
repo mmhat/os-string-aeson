@@ -16,7 +16,7 @@ data Mapping = Mapping
     { source :: OsString
     , destination :: OsString
     }
-    deriving (Eq, Show)
+    deriving (Eq)
 
 example :: Mapping
 example =
@@ -32,10 +32,10 @@ binaryFromJSON = withObject "Mapping" $ \obj -> do
     pure Mapping{..}
 
 binaryToJSON :: Mapping -> Value
-binaryToJSON x =
+binaryToJSON Mapping{..} =
     object
-        [ "source" .= toBinary (source x)
-        , "destination" .= toBinary (destination x)
+        [ "source" .= toBinary source
+        , "destination" .= toBinary destination
         ]
 
 testBinary :: IO ()
@@ -43,10 +43,9 @@ testBinary = do
     putStrLn "## Binary"
     let
         json = binaryToJSON example
-    print . encode $ json -- TODO: Use aeson-pretty
+    printJSON json
     mapping <- parseThrow binaryFromJSON json
     guard $ mapping == example
-    print mapping
 
 textualFromJSON :: Value -> Parser Mapping
 textualFromJSON = withObject "Mapping" $ \obj -> do
@@ -55,9 +54,9 @@ textualFromJSON = withObject "Mapping" $ \obj -> do
     pure Mapping{..}
 
 textualToJSON :: Mapping -> IO Value
-textualToJSON x = do
-    source' <- toText @Unicode (source x)
-    destination' <- toText @Unicode (destination x)
+textualToJSON Mapping{..} = do
+    source' <- toText @Unicode source
+    destination' <- toText @Unicode destination
     pure . object $
         [ "source" .= source'
         , "destination" .= destination'
@@ -67,10 +66,9 @@ testTextual :: IO ()
 testTextual = do
     putStrLn "## Textual"
     json <- textualToJSON example
-    print . encode $ json -- TODO: Use aeson-pretty
+    printJSON json
     mapping <- parseThrow textualFromJSON json
     guard $ mapping == example
-    print mapping
 
 taggedBinaryFromJSON :: Value -> Parser Mapping
 taggedBinaryFromJSON = withObject "Mapping" $ \obj -> do
@@ -79,10 +77,10 @@ taggedBinaryFromJSON = withObject "Mapping" $ \obj -> do
     pure Mapping{..}
 
 taggedBinaryToJSON :: Mapping -> Value
-taggedBinaryToJSON x =
+taggedBinaryToJSON Mapping{..} =
     object
-        [ "source" .= toTagged toBinaryAs (source x)
-        , "destination" .= toTagged toBinaryAs (destination x)
+        [ "source" .= toTagged toBinaryAs source
+        , "destination" .= toTagged toBinaryAs destination
         ]
 
 testTaggedBinary :: IO ()
@@ -90,10 +88,9 @@ testTaggedBinary = do
     putStrLn "## Tagged Binary"
     let
         json = taggedBinaryToJSON example
-    print . encode $ json -- TODO: Use aeson-pretty
+    printJSON json
     mapping <- parseThrow taggedBinaryFromJSON json
     guard $ mapping == example
-    print mapping
 
 taggedTextualFromJSON :: Value -> Parser Mapping
 taggedTextualFromJSON = withObject "Mapping" $ \obj -> do
@@ -102,9 +99,9 @@ taggedTextualFromJSON = withObject "Mapping" $ \obj -> do
     pure Mapping{..}
 
 taggedTextualToJSON :: Mapping -> IO Value
-taggedTextualToJSON x = do
-    source' <- toTaggedM (toTextAs @Unicode) (source x)
-    destination' <- toTaggedM (toTextAs @Unicode) (destination x)
+taggedTextualToJSON Mapping{..} = do
+    source' <- toTaggedM (toTextAs @Unicode) source
+    destination' <- toTaggedM (toTextAs @Unicode) destination
     pure . object $
         [ "source" .= source'
         , "destination" .= destination'
@@ -114,10 +111,9 @@ testTaggedTextual :: IO ()
 testTaggedTextual = do
     putStrLn "## Tagged Textual"
     json <- taggedTextualToJSON example
-    print . encode $ json -- TODO: Use aeson-pretty
+    printJSON json
     mapping <- parseThrow taggedTextualFromJSON json
     guard $ mapping == example
-    print mapping
 
 test :: IO ()
 test = do

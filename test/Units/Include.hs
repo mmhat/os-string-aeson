@@ -5,6 +5,7 @@
 --     PLATFORM_CHAR = PosixChar | WindowsChar
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -35,12 +36,14 @@ tests =
             [ testTagged
                 "Binary"
                 fromBinaryAs
+                False
                 [ taggedBinary "empty" []
                 , taggedBinary "[\\NUL]" [0]
                 ]
             , testTagged
                 "Text"
                 (fromTextAs @Unicode)
+                True
                 [ taggedText "empty" ""
                 , taggedText "\"\\NUL\"" "\NUL"
                 ]
@@ -49,22 +52,23 @@ tests =
 
 testTagged
     :: forall (t :: Tag 'Nested)
-     . (Typeable t, Typeable (TagEncoding t))
+     . (TagEncoding t, Typeable t)
     => TestName
     -> (Value -> Parser (As t PLATFORM_STRING))
+    -> Bool
     -> [TestTree]
     -> TestTree
-testTagged name parse others =
+testTagged name parse needsEncoding others =
     testGroup name $
         [ unit_tagged_noPlatform parse
-        , unit_tagged_noEncoding parse
+        , unit_tagged_noEncoding needsEncoding parse
         , unit_tagged_noPayload parse
         ]
             <> others
 
 unit_tagged_noPlatform
     :: forall (t :: Tag 'Nested)
-     . (Typeable t, Typeable (TagEncoding t))
+     . (TagEncoding t, Typeable t)
     => (Value -> Parser (As t PLATFORM_STRING))
     -> TestTree
 unit_tagged_noPlatform parse = testCase "no platform" $ do
@@ -80,10 +84,11 @@ unit_tagged_noPlatform parse = testCase "no platform" $ do
 
 unit_tagged_noEncoding
     :: forall (t :: Tag 'Nested)
-     . (Typeable t, Typeable (TagEncoding t))
-    => (Value -> Parser (As t PLATFORM_STRING))
+     . (TagEncoding t, Typeable t)
+    => Bool
+    -> (Value -> Parser (As t PLATFORM_STRING))
     -> TestTree
-unit_tagged_noEncoding parse = testCase "no encoding" $ do
+unit_tagged_noEncoding needsEncoding parse = testCase "no encoding" $ do
     let
         value =
             Aeson.object
@@ -92,11 +97,13 @@ unit_tagged_noEncoding parse = testCase "no encoding" $ do
                 ]
     let
         actual = Aeson.parseMaybe (fromTagged parse) value
-    assertBool "parse should fail" (isNothing actual)
+    if needsEncoding
+        then assertBool "parse should fail" (isNothing actual)
+        else assertBool "parse should succeed" (isJust actual)
 
 unit_tagged_noPayload
     :: forall (t :: Tag 'Nested)
-     . (Typeable t, Typeable (TagEncoding t))
+     . (TagEncoding t, Typeable t)
     => (Value -> Parser (As t PLATFORM_STRING))
     -> TestTree
 unit_tagged_noPayload parse = testCase "no payload" $ do
@@ -118,7 +125,7 @@ taggedText = taggedHelper (fromTextAs @Unicode)
 
 taggedHelper
     :: forall (t :: Tag 'Nested) a
-     . (ToJSON a, Typeable t, Typeable (TagEncoding t))
+     . (ToJSON a, TagEncoding t, Typeable t)
     => (Value -> Parser (As t PLATFORM_STRING))
     -> TestName
     -> a
@@ -128,7 +135,7 @@ taggedHelper parse name payload = testCase name $ do
         value =
             Aeson.object
                 [ "platform" .= (PLATFORM_NAME_DOUBLE :: Text)
-                , "encoding" .= show (typeRep @(TagEncoding t))
+                , "encoding" .= tagEncoding @_ @t
                 , "payload" .= payload
                 ]
     let
