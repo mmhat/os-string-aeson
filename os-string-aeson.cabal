@@ -62,7 +62,7 @@ library
     os-string-aeson-internal,
     text >=0.1 && <2.2,
 
-  -- cabal-gild: discover ./src/ --exclude=**/Include.hs
+  -- cabal-gild: discover ./src/ --exclude=Setup.hs --exclude=**/Include.hs
   exposed-modules:
     System.OsString.Aeson
     System.OsString.Aeson.Posix
@@ -77,7 +77,7 @@ library os-string-aeson-internal
     base >=4.14 && <4.21,
     text,
 
-  -- cabal-gild: discover ./os-string-aeson-internal/
+  -- cabal-gild: discover ./os-string-aeson-internal/ --exclude=Setup.hs
   exposed-modules:
     System.OsString.Aeson.Types
 
@@ -98,9 +98,11 @@ test-suite examples
     os-string-aeson,
     text,
 
-  -- cabal-gild: discover ./examples/ --exclude=examples/Main.hs
+  -- cabal-gild: discover ./examples/ --exclude=Setup.hs --exclude=examples/Main.hs
   other-modules:
     Functions
+    HKD1
+    HKD2
     Utils
 
 test-suite test
@@ -123,7 +125,7 @@ test-suite test
     tasty-rerun,
     text,
 
-  -- cabal-gild: discover ./test/ --exclude=test/Main.hs --exclude=**/Include.hs
+  -- cabal-gild: discover ./test/ --exclude=Setup.hs --exclude=test/Main.hs --exclude=**/Include.hs
   other-modules:
     Properties.Posix
     Properties.Windows
