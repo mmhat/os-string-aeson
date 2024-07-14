@@ -37,7 +37,7 @@ pattern AsBinary
     :: forall {l :: Level} a. a -> As ('Binary :: Tag l) a
 #else
 pattern AsBinary
-    :: forall a. a -> As ('Binary :: Tag 'TopLevel) a
+    :: forall (l :: Level) a. a -> As ('Binary :: Tag l) a
 #endif
 pattern AsBinary x = As x
 
@@ -45,10 +45,12 @@ pattern AsBinary x = As x
 
 #if MIN_TOOL_VERSION_ghc(9,0,0)
 pattern AsText
-    :: forall {l :: Level} (enc :: Type) a. a -> As ('Text enc :: Tag l) a
+    :: forall (enc :: Type) {l :: Level} a
+     . a -> As ('Text enc :: Tag l) a
 #else
 pattern AsText
-    :: forall (enc :: Type) a. a -> As ('Text enc :: Tag 'TopLevel) a
+    :: forall (enc :: Type) (l :: Level) a
+     . a -> As ('Text enc :: Tag l) a
 #endif
 pattern AsText x = As x
 
