@@ -37,6 +37,10 @@ prop_functions_roundtripDefault :: Property
 prop_functions_roundtripDefault =
     roundtripFunctionsNoAs genUnrestricted defaultParseJSON defaultToJSON
 
+prop_functions_roundtripBase64 :: Property
+prop_functions_roundtripBase64 =
+    roundtripFunctions genUnrestricted fromBase64As toBase64As
+
 prop_functions_roundtripBinary :: Property
 prop_functions_roundtripBinary =
     roundtripFunctions genUnrestricted fromBinaryAs toBinaryAs
@@ -44,6 +48,13 @@ prop_functions_roundtripBinary =
 prop_functions_roundtripText :: Property
 prop_functions_roundtripText =
     roundtripFunctionsM @('Text Unicode) genUnicode fromTextAs toTextAs
+
+prop_functions_roundtripTaggedBase64 :: Property
+prop_functions_roundtripTaggedBase64 =
+    roundtripFunctions
+        genUnrestricted
+        (fromTaggedAs fromBase64As)
+        (toTaggedAs toBase64As)
 
 prop_functions_roundtripTaggedBinary :: Property
 prop_functions_roundtripTaggedBinary =
@@ -70,6 +81,10 @@ prop_instances_roundtripBinary =
 prop_instances_roundtripText :: Property
 prop_instances_roundtripText =
     roundtripInstances genUnicode (AsText @Unicode)
+
+prop_instances_roundtripTaggedBase64 :: Property
+prop_instances_roundtripTaggedBase64 =
+    roundtripInstances genUnrestricted AsTaggedBase64
 
 prop_instances_roundtripTaggedBinary :: Property
 prop_instances_roundtripTaggedBinary =

@@ -57,10 +57,13 @@ library
   build-depends:
     aeson >=1.0.0.0 && <2.3,
     base >=4.14 && <4.21,
+    base64,
+    bytestring,
     exceptions >=0.4 && <0.11,
     os-string >=2.0.0 && <2.1,
     os-string-aeson-internal,
     text >=0.1 && <2.2,
+    text-short,
 
   -- cabal-gild: discover ./src/ --exclude=Setup.hs --exclude=**/Include.hs
   exposed-modules:
@@ -75,6 +78,7 @@ library os-string-aeson-internal
   build-depends:
     aeson,
     base >=4.14 && <4.21,
+    base64,
     text,
 
   -- cabal-gild: discover ./os-string-aeson-internal/ --exclude=Setup.hs

@@ -28,9 +28,21 @@ data Level
     | TopLevel
 
 data Tag :: Level -> Type where
+    Base64 :: Tag a
     Binary :: Tag a
     Text :: (enc :: Type) -> Tag a
     Tagged :: Tag 'Nested -> Tag 'TopLevel
+
+#if MIN_TOOL_VERSION_ghc(9,0,0)
+pattern AsBase64
+    :: forall {l :: Level} a. a -> As ('Base64 :: Tag l) a
+#else
+pattern AsBase64
+    :: forall (l :: Level) a. a -> As ('Base64 :: Tag l) a
+#endif
+pattern AsBase64 x = As x
+
+{-# COMPLETE AsBase64 #-}
 
 #if MIN_TOOL_VERSION_ghc(9,0,0)
 pattern AsBinary
@@ -56,6 +68,12 @@ pattern AsText x = As x
 
 {-# COMPLETE AsText #-}
 
+pattern AsTaggedBase64
+    :: forall a. a -> As ('Tagged 'Base64 :: Tag 'TopLevel) a
+pattern AsTaggedBase64 x = As x
+
+{-# COMPLETE AsTaggedBase64 #-}
+
 pattern AsTaggedBinary
     :: forall a. a -> As ('Tagged 'Binary :: Tag 'TopLevel) a
 pattern AsTaggedBinary x = As x
@@ -68,6 +86,10 @@ pattern AsTaggedText x = As x
 
 {-# COMPLETE AsTaggedText #-}
 
+asBase64 :: forall a. As 'Base64 a -> a
+asBase64 (AsBase64 x) = x
+{-# INLINE asBase64 #-}
+
 asBinary :: forall a. As 'Binary a -> a
 asBinary (AsBinary x) = x
 {-# INLINE asBinary #-}
@@ -75,6 +97,10 @@ asBinary (AsBinary x) = x
 asText :: forall (enc :: Type) a. As ('Text enc) a -> a
 asText (AsText x) = x
 {-# INLINE asText #-}
+
+asTaggedBase64 :: forall a. As ('Tagged 'Base64) a -> a
+asTaggedBase64 (AsTaggedBase64 x) = x
+{-# INLINE asTaggedBase64 #-}
 
 asTaggedBinary :: forall a. As ('Tagged 'Binary) a -> a
 asTaggedBinary (AsTaggedBinary x) = x
@@ -86,6 +112,9 @@ asTaggedText (AsTaggedText x) = x
 
 class TagEncoding (t :: Tag l) where
     tagEncoding :: Value
+
+instance TagEncoding 'Base64 where
+    tagEncoding = Null
 
 instance TagEncoding 'Binary where
     tagEncoding = Null

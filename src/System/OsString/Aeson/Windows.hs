@@ -9,4 +9,5 @@
 #define PLATFORM_WORD_SINGLE   'Word16'
 #define PLATFORM_UTF_CODEC     UTF16-LE
 #define IS_WINDOWS             1
+#define BASE64_EXAMPLE         "ZgBvAG8A"
 #include "Include.hs"

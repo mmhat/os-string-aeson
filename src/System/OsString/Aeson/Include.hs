@@ -9,6 +9,7 @@
 --     PLATFORM_WORD_SINGLE = 'Word8' | 'Word16'
 --     PLATFORM_UTF_CODEC = UTF8 | UTF16-LE
 --     IS_WINDOWS = 0 | 1
+--     BASE64_EXAMPLE = "..."
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
@@ -81,6 +82,8 @@ module System.OsString.Aeson.PLATFORM_NAME (
     defaultParseJSON,
     defaultToJSON,
     defaultToEncoding,
+    fromBase64,
+    fromBase64As,
     fromBinary,
     fromBinaryAs,
     fromText,
@@ -88,6 +91,10 @@ module System.OsString.Aeson.PLATFORM_NAME (
     fromTextWith,
     fromTagged,
     fromTaggedAs,
+    toBase64,
+    toBase64As,
+    toBase64Encoding,
+    toBase64EncodingAs,
     toBinary,
     toBinaryAs,
     toBinaryEncoding,
@@ -115,10 +122,24 @@ module System.OsString.Aeson.PLATFORM_NAME (
 
     -- * Conversion using newtype wrappers
     -- $newtypes
-    As (As, AsBinary, AsText, AsTaggedBinary, AsTaggedText),
+    As (
+        As,
+        AsBase64,
+        AsBinary,
+        AsText,
+        AsTaggedBase64,
+        AsTaggedBinary,
+        AsTaggedText
+    ),
     Tag (..),
     Level (..),
     TagEncoding (..),
+    asBase64,
+    asBinary,
+    asText,
+    asTaggedBase64,
+    asTaggedBinary,
+    asTaggedText,
 
     -- * Text encodings
     TextEncoding,
@@ -148,15 +169,18 @@ import Data.Aeson.Types (
     (.=),
  )
 import Data.Aeson.Types qualified as Aeson
+import Data.Base64.Types qualified as Base64
+import Data.ByteString.Short (ShortByteString)
+import Data.ByteString.Short.Base64 qualified as Base64
 import Data.Coerce (coerce)
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as Text
+import Data.Text.Short qualified as Text.Short
 import Data.Typeable (Typeable)
 import Data.Word (PLATFORM_WORD)
 import System.IO (TextEncoding)
-import System.OsString.Internal.Types (PLATFORM_CHAR (..))
-import System.OsString.PLATFORM_NAME (PLATFORM_STRING)
+import System.OsString.Internal.Types (PLATFORM_CHAR (..), PLATFORM_STRING (..))
 import System.OsString.PLATFORM_NAME qualified as OsString
 import Type.Reflection (typeRep)
 
@@ -202,10 +226,79 @@ defaultToEncoding x =
 {-# INLINE defaultToEncoding #-}
 
 ----------------------------------------
+-- Base64
+----------------------------------------
+
+-- | Try to parse a PLATFORM_STRING_DOUBLE from the base64-text representation:
+--
+--     >>> fromBase64 BASE64_EXAMPLE
+--     [pstr|foo|]
+fromBase64 :: Value -> Parser PLATFORM_STRING
+fromBase64 value =
+    either (fail . Text.unpack) (pure . coerce)
+        . Base64.decodeBase64Untyped
+        . Text.Short.toShortByteString
+        =<< parseJSON value
+{-# INLINE fromBase64 #-}
+
+-- | A version of 'fromBase64' that returns the resulting PLATFORM_STRING_DOUBLE
+-- wrapped in an 'As' newtype.
+fromBase64As
+    :: Value
+    -> Parser
+        ( As
+            'Base64
+            PLATFORM_STRING
+        )
+fromBase64As = fmap As . fromBase64
+{-# INLINE fromBase64As #-}
+
+-- | Encode a PLATFORM_STRING_DOUBLE in the base64-text representation:
+--
+--     >>> toBase64 [pstr|foo|]
+--     BASE64_EXAMPLE
+toBase64 :: PLATFORM_STRING -> Value
+toBase64 =
+    toJSON
+        . Base64.extractBase64
+        . Base64.encodeBase64
+        . coerce @_ @ShortByteString
+{-# INLINE toBase64 #-}
+
+-- | A version of 'toBase64' that expects the PLATFORM_STRING_DOUBLE to be
+-- wrapped in an 'As' newtype.
+toBase64As
+    :: As
+        'Base64
+        PLATFORM_STRING
+    -> Value
+toBase64As = toBase64 . unAs
+{-# INLINE toBase64As #-}
+
+-- | Similar to 'toBase64', but returns an 'Encoding' instead of a 'Value'.
+toBase64Encoding :: PLATFORM_STRING -> Encoding
+toBase64Encoding =
+    toEncoding
+        . Base64.extractBase64
+        . Base64.encodeBase64
+        . coerce @_ @ShortByteString
+{-# INLINE toBase64Encoding #-}
+
+-- | A version of 'toBase64Encoding' that expects the PLATFORM_STRING_DOUBLE to
+-- be wrapped in an 'As' newtype.
+toBase64EncodingAs
+    :: As
+        'Base64
+        PLATFORM_STRING
+    -> Encoding
+toBase64EncodingAs = toBase64Encoding . unAs
+{-# INLINE toBase64EncodingAs #-}
+
+----------------------------------------
 -- Binary
 ----------------------------------------
 
--- | Try to parse a PLATFORM_STRING_DOUBLE from a JSON binary representation:
+-- | Try to parse a PLATFORM_STRING_DOUBLE from the binary representation:
 --
 --     >>> fromBinary "[102,111,111]"
 --     [pstr|foo|]
@@ -228,7 +321,7 @@ fromBinaryAs
 fromBinaryAs = fmap As . fromBinary
 {-# INLINE fromBinaryAs #-}
 
--- | Encode a PLATFORM_STRING_DOUBLE in the JSON binary representation:
+-- | Encode a PLATFORM_STRING_DOUBLE in the binary representation:
 --
 --     >>> toBinary [pstr|foo|]
 --     "[102,111,111]"
@@ -271,7 +364,7 @@ toBinaryEncodingAs = toBinaryEncoding . unAs
 -- Text
 ----------------------------------------
 
--- | Try to parse a PLATFORM_STRING_DOUBLE from a JSON textual representation:
+-- | Try to parse a PLATFORM_STRING_DOUBLE from the textual representation:
 --
 --     >>> fromText @Unicode "foo"
 --     [pstr|foo|]
@@ -306,7 +399,7 @@ fromTextWith
 fromTextWith enc = unsafeEncodeWith enc <=< parseJSON
 {-# INLINE fromTextWith #-}
 
--- | Encode a PLATFORM_STRING_DOUBLE in the JSON textual representation:
+-- | Encode a PLATFORM_STRING_DOUBLE in the textual representation:
 --
 --     >>> toText [pstr|foo|]
 --     "foo"
@@ -330,8 +423,7 @@ toTextAs
 toTextAs = toText @enc . unAs
 {-# INLINE toTextAs #-}
 
--- | A version of 'toText' that takes the 'TextEncoding' as the first
--- argument.
+-- | A version of 'toText' that takes the 'TextEncoding' as the first argument.
 toTextWith
     :: (MonadThrow m)
     => TextEncoding
@@ -341,6 +433,8 @@ toTextWith enc =
     either throwM (pure . toJSON) . OsString.decodeWith enc
 {-# INLINE toTextWith #-}
 
+-- | A version of 'toText' that is pure, but throws a 'EncodingException' at
+-- runtime if it fails to encode the PLATFORM_STRING_DOUBLE.
 unsafeToText
     :: forall enc
      . (IsTextEncoding enc)
@@ -349,6 +443,8 @@ unsafeToText
 unsafeToText = unsafeToTextWith (textEncoding @enc)
 {-# INLINE unsafeToText #-}
 
+-- | A version of 'toTextAs' that is pure, but throws a 'EncodingException' at
+-- runtime if it fails to encode the PLATFORM_STRING_DOUBLE.
 unsafeToTextAs
     :: forall enc
      . (IsTextEncoding enc)
@@ -359,6 +455,8 @@ unsafeToTextAs
 unsafeToTextAs = unsafeToText @enc . unAs
 {-# INLINE unsafeToTextAs #-}
 
+-- | A version of 'toTextWith' that is pure, but throws a 'EncodingException' at
+-- runtime if it fails to encode the PLATFORM_STRING_DOUBLE.
 unsafeToTextWith
     :: TextEncoding
     -> PLATFORM_STRING
@@ -399,6 +497,9 @@ toTextEncodingWith enc =
     either throwM (pure . toEncoding) . OsString.decodeWith enc
 {-# INLINE toTextEncodingWith #-}
 
+-- | A version of 'toTextEncoding' that is pure, but throws a
+-- 'EncodingException' at runtime if it fails to encode the
+-- PLATFORM_STRING_DOUBLE.
 unsafeToTextEncoding
     :: forall enc
      . (IsTextEncoding enc)
@@ -407,6 +508,9 @@ unsafeToTextEncoding
 unsafeToTextEncoding = unsafeToTextEncodingWith (textEncoding @enc)
 {-# INLINE unsafeToTextEncoding #-}
 
+-- | A version of 'toTextEncodingAs' that is pure, but throws a
+-- 'EncodingException' at runtime if it fails to encode the
+-- PLATFORM_STRING_DOUBLE.
 unsafeToTextEncodingAs
     :: forall enc
      . (IsTextEncoding enc)
@@ -417,6 +521,9 @@ unsafeToTextEncodingAs
 unsafeToTextEncodingAs = unsafeToTextEncoding @enc . unAs
 {-# INLINE unsafeToTextEncodingAs #-}
 
+-- | A version of 'toTextEncodingWith' that is pure, but throws a
+-- 'EncodingException' at runtime if it fails to encode the
+-- PLATFORM_STRING_DOUBLE.
 unsafeToTextEncodingWith
     :: TextEncoding
     -> PLATFORM_STRING
@@ -644,6 +751,54 @@ deriving via
 --    The encoding used is determined by the type parameter of 'AsText', i.e.
 --    a @AsText enc PLATFORM_STRING@ will be encoded to the textual
 --    representation using the encoding @enc@.
+
+----------------------------------------
+-- Base64
+----------------------------------------
+
+instance
+    FromJSON
+        ( As
+            'Base64
+            PLATFORM_STRING
+        )
+    where
+    parseJSON = fromBase64As
+    {-# INLINE parseJSON #-}
+
+instance
+    ToJSON
+        ( As
+            'Base64
+            PLATFORM_STRING
+        )
+    where
+    toJSON = toBase64As
+    {-# INLINE toJSON #-}
+    toEncoding = toBase64EncodingAs
+    {-# INLINE toEncoding #-}
+
+instance
+    FromJSONKey
+        ( As
+            'Base64
+            PLATFORM_STRING
+        )
+    where
+    -- TODO: Use FromJSONKeyTextParser here
+    fromJSONKey = Aeson.FromJSONKeyValue parseJSON
+    {-# INLINE fromJSONKey #-}
+
+instance
+    ToJSONKey
+        ( As
+            'Base64
+            PLATFORM_STRING
+        )
+    where
+    -- TODO: Use toJSONKeyText here
+    toJSONKey = Aeson.ToJSONKeyValue toJSON toEncoding
+    {-# INLINE toJSONKey #-}
 
 ----------------------------------------
 -- Binary

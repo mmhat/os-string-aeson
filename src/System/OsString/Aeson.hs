@@ -85,6 +85,8 @@ module System.OsString.Aeson (
     defaultParseJSON,
     defaultToJSON,
     defaultToEncoding,
+    fromBase64,
+    fromBase64As,
     fromBinary,
     fromBinaryAs,
     fromText,
@@ -92,6 +94,10 @@ module System.OsString.Aeson (
     fromTextWith,
     fromTagged,
     fromTaggedAs,
+    toBase64,
+    toBase64As,
+    toBase64Encoding,
+    toBase64EncodingAs,
     toBinary,
     toBinaryAs,
     toBinaryEncoding,
@@ -118,10 +124,24 @@ module System.OsString.Aeson (
     unsafeToTextEncodingWith,
 
     -- * Conversion using newtype wrappers
-    As (As, AsBinary, AsText, AsTaggedBinary, AsTaggedText),
+    As (
+        As,
+        AsBase64,
+        AsBinary,
+        AsText,
+        AsTaggedBase64,
+        AsTaggedBinary,
+        AsTaggedText
+    ),
     Tag (..),
     Level (..),
     TagEncoding (..),
+    asBase64,
+    asBinary,
+    asText,
+    asTaggedBase64,
+    asTaggedBinary,
+    asTaggedText,
 
     -- * Text encodings
     TextEncoding,
@@ -169,6 +189,34 @@ defaultToJSON = Platform.defaultToJSON . getOsString
 defaultToEncoding :: OsString -> Encoding
 defaultToEncoding = Platform.defaultToEncoding . getOsString
 {-# INLINE defaultToEncoding #-}
+
+----------------------------------------
+-- Base64
+----------------------------------------
+
+fromBase64 :: Value -> Parser OsString
+fromBase64 = fmap OsString . Platform.fromBase64
+{-# INLINE fromBase64 #-}
+
+fromBase64As :: Value -> Parser (As 'Base64 OsString)
+fromBase64As = fmap (fmap OsString) . Platform.fromBase64As
+{-# INLINE fromBase64As #-}
+
+toBase64 :: OsString -> Value
+toBase64 = Platform.toBase64 . getOsString
+{-# INLINE toBase64 #-}
+
+toBase64As :: As 'Base64 OsString -> Value
+toBase64As = Platform.toBase64As . fmap getOsString
+{-# INLINE toBase64As #-}
+
+toBase64Encoding :: OsString -> Encoding
+toBase64Encoding = Platform.toBase64Encoding . getOsString
+{-# INLINE toBase64Encoding #-}
+
+toBase64EncodingAs :: As 'Base64 OsString -> Encoding
+toBase64EncodingAs = Platform.toBase64EncodingAs . fmap getOsString
+{-# INLINE toBase64EncodingAs #-}
 
 ----------------------------------------
 -- Binary

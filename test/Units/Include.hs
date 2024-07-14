@@ -19,6 +19,7 @@ import Data.Aeson.Types (Parser, ToJSON, Value, (.=))
 import Data.Aeson.Types qualified as Aeson
 import Data.Maybe (isJust, isNothing)
 import Data.Text (Text)
+import Data.Text qualified as Text
 import Data.Typeable (Typeable)
 import System.OsString.PLATFORM_NAME (PLATFORM_STRING)
 import Test.Tasty
@@ -34,34 +35,45 @@ tests =
         [ testGroup
             "Tagged"
             [ testTagged
+                "Base64"
+                fromBase64As
+                False
+                Text.empty
+                [ taggedBase64 "empty" ""
+                , taggedBase64 "null byte" "AA=="
+                ]
+            , testTagged
                 "Binary"
                 fromBinaryAs
                 False
+                ([] :: [Word])
                 [ taggedBinary "empty" []
-                , taggedBinary "[\\NUL]" [0]
+                , taggedBinary "null byte" [0]
                 ]
             , testTagged
                 "Text"
                 (fromTextAs @Unicode)
                 True
+                Text.empty
                 [ taggedText "empty" ""
-                , taggedText "\"\\NUL\"" "\NUL"
+                , taggedText "null byte" "\NUL"
                 ]
             ]
         ]
 
 testTagged
-    :: forall (t :: Tag 'Nested)
-     . (TagEncoding t, Typeable t)
+    :: forall (t :: Tag 'Nested) a
+     . (ToJSON a, TagEncoding t, Typeable t)
     => TestName
     -> (Value -> Parser (As t PLATFORM_STRING))
     -> Bool
+    -> a
     -> [TestTree]
     -> TestTree
-testTagged name parse needsEncoding others =
+testTagged name parse needsEncoding emptyPayload others =
     testGroup name $
         [ unit_tagged_noPlatform parse
-        , unit_tagged_noEncoding needsEncoding parse
+        , unit_tagged_noEncoding needsEncoding emptyPayload parse
         , unit_tagged_noPayload parse
         ]
             <> others
@@ -83,23 +95,25 @@ unit_tagged_noPlatform parse = testCase "no platform" $ do
     assertBool "parse should fail" (isNothing actual)
 
 unit_tagged_noEncoding
-    :: forall (t :: Tag 'Nested)
-     . (TagEncoding t, Typeable t)
+    :: forall (t :: Tag 'Nested) a
+     . (ToJSON a, TagEncoding t, Typeable t)
     => Bool
+    -> a
     -> (Value -> Parser (As t PLATFORM_STRING))
     -> TestTree
-unit_tagged_noEncoding needsEncoding parse = testCase "no encoding" $ do
-    let
-        value =
-            Aeson.object
-                [ "platform" .= (PLATFORM_NAME_DOUBLE :: Text)
-                , "payload" .= ([] :: [Word])
-                ]
-    let
-        actual = Aeson.parseMaybe (fromTagged parse) value
-    if needsEncoding
-        then assertBool "parse should fail" (isNothing actual)
-        else assertBool "parse should succeed" (isJust actual)
+unit_tagged_noEncoding needsEncoding emptyPayload parse =
+    testCase "no encoding" $ do
+        let
+            value =
+                Aeson.object
+                    [ "platform" .= (PLATFORM_NAME_DOUBLE :: Text)
+                    , "payload" .= emptyPayload
+                    ]
+        let
+            actual = Aeson.parseMaybe (fromTagged parse) value
+        if needsEncoding
+            then assertBool "parse should fail" (isNothing actual)
+            else assertBool "parse should succeed" (isJust actual)
 
 unit_tagged_noPayload
     :: forall (t :: Tag 'Nested)
@@ -116,6 +130,9 @@ unit_tagged_noPayload parse = testCase "no payload" $ do
     let
         actual = Aeson.parseMaybe (fromTagged parse) value
     assertBool "parse should fail" (isNothing actual)
+
+taggedBase64 :: TestName -> Text -> TestTree
+taggedBase64 = taggedHelper fromBase64As
 
 taggedBinary :: TestName -> [Word] -> TestTree
 taggedBinary = taggedHelper fromBinaryAs

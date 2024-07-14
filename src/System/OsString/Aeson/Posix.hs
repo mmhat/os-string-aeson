@@ -9,4 +9,5 @@
 #define PLATFORM_WORD_SINGLE   'Word8'
 #define PLATFORM_UTF_CODEC     UTF8
 #define IS_WINDOWS             0
+#define BASE64_EXAMPLE         "Zm9v"
 #include "Include.hs"
