@@ -6,6 +6,6 @@ import HKD2 qualified
 
 main :: IO ()
 main = do
-  Functions.test
-  HKD1.test
-  HKD2.test
+    Functions.test
+    HKD1.test
+    HKD2.test

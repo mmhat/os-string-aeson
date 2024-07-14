@@ -3,6 +3,7 @@
 --     PLATFORM_STRING = PosixPath | WindowsPath
 --     PLATFORM_CHAR = PosixChar | WindowsChar
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TemplateHaskell #-}

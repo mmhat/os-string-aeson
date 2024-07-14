@@ -18,17 +18,17 @@ import Utils
 data RepTag = Id | JSON
 
 type family FieldRep (t :: RepTag) (a :: Type) :: Type where
-  FieldRep 'Id a = a
-  FieldRep 'JSON OsString = As ('Text Unicode :: Tag 'TopLevel) OsString
-  FieldRep 'JSON a = a
+    FieldRep 'Id a = a
+    FieldRep 'JSON OsString = As ('Text Unicode :: Tag 'TopLevel) OsString
+    FieldRep 'JSON a = a
 
 type Mapping = Mapping' 'Id
 
 data Mapping' t = Mapping
-  { source :: FieldRep t OsString,
-    destination :: FieldRep t OsString
-  }
-  deriving (Generic)
+    { source :: FieldRep t OsString
+    , destination :: FieldRep t OsString
+    }
+    deriving (Generic)
 
 deriving instance Eq (Mapping' 'Id)
 
@@ -44,15 +44,16 @@ deriving via (CoercibleRep (Mapping' 'JSON) Mapping) instance ToJSON Mapping
 
 example :: Mapping
 example =
-  Mapping
-    { source = exampleSource,
-      destination = exampleDestination
-    }
+    Mapping
+        { source = exampleSource
+        , destination = exampleDestination
+        }
 
 test :: IO ()
 test = do
-  putStrLn "# HKD 2"
-  let json = toJSON example
-  printJSON json
-  mapping <- parseThrow parseJSON json
-  guard $ mapping == example
+    putStrLn "# HKD 2"
+    let
+        json = toJSON example
+    printJSON json
+    mapping <- parseThrow parseJSON json
+    guard $ mapping == example

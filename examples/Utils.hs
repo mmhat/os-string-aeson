@@ -7,12 +7,12 @@
 
 module Utils where
 
-import Data.Aeson.Encode.Pretty
-  ( Config (confCompare),
+import Data.Aeson.Encode.Pretty (
+    Config (confCompare),
     defConfig,
     encodePretty',
     keyOrder,
-  )
+ )
 import Data.Aeson.Types (FromJSON (..), Parser, ToJSON (..), Value, parseEither)
 import Data.ByteString.Lazy qualified as ByteString
 import Data.Coerce (Coercible, coerce)
@@ -30,24 +30,24 @@ exampleDestination = [osstr|/that|]
 
 parseThrow :: (Value -> Parser a) -> Value -> IO a
 parseThrow parse value = case parseEither parse value of
-  Left e -> fail e
-  Right result -> pure result
+    Left e -> fail e
+    Right result -> pure result
 
 printJSON :: (ToJSON a) => a -> IO ()
 printJSON x =
-  ByteString.putStr
-    (encodePretty' config x <> ByteString.singleton 10)
-  where
-    config :: Config
-    config =
-      defConfig
-        { confCompare =
-            keyOrder
-              [ "platform",
-                "encoding",
-                "payload"
-              ]
-        }
+    ByteString.putStr
+        (encodePretty' config x <> ByteString.singleton 10)
+    where
+        config :: Config
+        config =
+            defConfig
+                { confCompare =
+                    keyOrder
+                        [ "platform"
+                        , "encoding"
+                        , "payload"
+                        ]
+                }
 
 -- The following functions and types are necessary because of shortcomings of
 -- the coercion mechanism implemented in GHC. See for examples the following
@@ -61,11 +61,11 @@ printJSON x =
 -- The implementation is derived from the one found in the paper
 -- "Deriving via: or, how to turn hand-written instances into an anti-pattern",
 -- Section 4.3.
-coerceViaRep ::
-  forall a b.
-  (Generic a, Generic b, Coercible (Rep a ()) (Rep b ())) =>
-  a ->
-  b
+coerceViaRep
+    :: forall a b
+     . (Generic a, Generic b, Coercible (Rep a ()) (Rep b ()))
+    => a
+    -> b
 coerceViaRep = to . (coerce :: Rep a () -> Rep b ()) . from
 
 type role CoercibleRep phantom representational
@@ -74,14 +74,14 @@ type role CoercibleRep phantom representational
 newtype CoercibleRep a b = CoercibleRep {unCoercibleRep :: b}
 
 instance
-  (Generic a, Generic b, Coercible (Rep a ()) (Rep b ()), FromJSON a) =>
-  FromJSON (CoercibleRep a b)
-  where
-  parseJSON value =
-    CoercibleRep . coerceViaRep @a @_ <$> parseJSON value
+    (Generic a, Generic b, Coercible (Rep a ()) (Rep b ()), FromJSON a)
+    => FromJSON (CoercibleRep a b)
+    where
+    parseJSON value =
+        CoercibleRep . coerceViaRep @a @_ <$> parseJSON value
 
 instance
-  (Generic a, Generic b, Coercible (Rep a ()) (Rep b ()), ToJSON a) =>
-  ToJSON (CoercibleRep a b)
-  where
-  toJSON = toJSON . coerceViaRep @_ @a . unCoercibleRep
+    (Generic a, Generic b, Coercible (Rep a ()) (Rep b ()), ToJSON a)
+    => ToJSON (CoercibleRep a b)
+    where
+    toJSON = toJSON . coerceViaRep @_ @a . unCoercibleRep

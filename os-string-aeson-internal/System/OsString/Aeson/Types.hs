@@ -1,4 +1,5 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -31,28 +32,38 @@ data Tag :: Level -> Type where
     Text :: (enc :: Type) -> Tag a
     Tagged :: Tag 'Nested -> Tag 'TopLevel
 
+#if MIN_TOOL_VERSION_ghc(9,0,0)
 pattern AsBinary
-    :: forall {l :: Level} a
-     . a -> As ('Binary :: Tag l) a
+    :: forall {l :: Level} a. a -> As ('Binary :: Tag l) a
+#else
+pattern AsBinary
+    :: forall (l :: Level) a. a -> As ('Binary :: Tag l) a
+#endif
 pattern AsBinary x = As x
+
 {-# COMPLETE AsBinary #-}
 
+#if MIN_TOOL_VERSION_ghc(9,0,0)
 pattern AsText
-    :: forall {l :: Level} (enc :: Type) a
-     . a -> As ('Text enc :: Tag l) a
+    :: forall {l :: Level} (enc :: Type) a. a -> As ('Text enc :: Tag l) a
+#else
+pattern AsText
+    :: forall (l :: Level) (enc :: Type) a. a -> As ('Text enc :: Tag l) a
+#endif
 pattern AsText x = As x
+
 {-# COMPLETE AsText #-}
 
 pattern AsTaggedBinary
-    :: forall a
-     . a -> As ('Tagged 'Binary :: Tag 'TopLevel) a
+    :: forall a. a -> As ('Tagged 'Binary :: Tag 'TopLevel) a
 pattern AsTaggedBinary x = As x
+
 {-# COMPLETE AsTaggedBinary #-}
 
 pattern AsTaggedText
-    :: forall (enc :: Type) a
-     . a -> As ('Tagged ('Text enc) :: Tag 'TopLevel) a
+    :: forall (enc :: Type) a. a -> As ('Tagged ('Text enc) :: Tag 'TopLevel) a
 pattern AsTaggedText x = As x
+
 {-# COMPLETE AsTaggedText #-}
 
 asBinary :: forall a. As 'Binary a -> a
