@@ -8,11 +8,12 @@
 module HKD1 (test) where
 
 import Control.Monad (guard)
-import Data.Aeson
-import Data.Functor.Identity
-import GHC.Generics
+import Data.Aeson.Types (FromJSON (..), ToJSON (..))
+import Data.Functor.Identity (Identity (..))
+import GHC.Generics (Generic)
 import System.OsString
 import System.OsString.Aeson
+
 import Utils
 
 type Mapping = Mapping' Identity

@@ -8,11 +8,12 @@
 module HKD2 (test) where
 
 import Control.Monad (guard)
-import Data.Aeson
+import Data.Aeson.Types (FromJSON (..), ToJSON (..))
 import Data.Kind (Type)
-import GHC.Generics
+import GHC.Generics (Generic)
 import System.OsString
 import System.OsString.Aeson
+
 import Utils
 
 data RepTag = Id | JSON

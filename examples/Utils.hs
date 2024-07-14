@@ -16,7 +16,7 @@ import Data.Aeson.Encode.Pretty (
 import Data.Aeson.Types (FromJSON (..), Parser, ToJSON (..), Value, parseEither)
 import Data.ByteString.Lazy qualified as ByteString
 import Data.Coerce (Coercible, coerce)
-import GHC.Generics
+import GHC.Generics (Generic, Rep, from, to)
 import System.OsString
 
 exampleSource, exampleDestination :: OsString

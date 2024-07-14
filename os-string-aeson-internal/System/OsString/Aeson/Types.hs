@@ -37,7 +37,7 @@ pattern AsBinary
     :: forall {l :: Level} a. a -> As ('Binary :: Tag l) a
 #else
 pattern AsBinary
-    :: forall (l :: Level) a. a -> As ('Binary :: Tag l) a
+    :: forall a. a -> As ('Binary :: Tag 'TopLevel) a
 #endif
 pattern AsBinary x = As x
 
@@ -48,7 +48,7 @@ pattern AsText
     :: forall {l :: Level} (enc :: Type) a. a -> As ('Text enc :: Tag l) a
 #else
 pattern AsText
-    :: forall (l :: Level) (enc :: Type) a. a -> As ('Text enc :: Tag l) a
+    :: forall (enc :: Type) a. a -> As ('Text enc :: Tag 'TopLevel) a
 #endif
 pattern AsText x = As x
 

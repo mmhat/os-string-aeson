@@ -5,8 +5,7 @@
 module Functions (test) where
 
 import Control.Monad (guard)
-import Data.Aeson
-import Data.Aeson.Types
+import Data.Aeson.Types (Parser, Value, object, withObject, (.:), (.=))
 import System.OsString
 import System.OsString.Aeson
 

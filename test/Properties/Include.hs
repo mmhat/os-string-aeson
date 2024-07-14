@@ -11,7 +11,8 @@
 
 module Properties.PLATFORM_NAME (
     tests,
-) where
+)
+where
 
 import Control.Monad ((<=<))
 import Control.Monad.Catch (MonadThrow)
@@ -22,13 +23,12 @@ import Data.Aeson.Types qualified as Aeson
 import Hedgehog
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
+import System.OsString.Aeson.PLATFORM_NAME
 import System.OsString.Internal.Types (PLATFORM_CHAR (..))
 import System.OsString.PLATFORM_NAME (PLATFORM_STRING)
 import System.OsString.PLATFORM_NAME qualified as OsString
 import Test.Tasty
 import Test.Tasty.Hedgehog
-
-import System.OsString.Aeson.PLATFORM_NAME
 
 tests :: TestTree
 tests = fromGroup $$(discover)
