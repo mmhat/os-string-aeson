@@ -67,9 +67,9 @@
 -- example:
 --
 --     >>> Data.Aeson.encode <$> toTaggedM (toTextAs @Utf8) [osstr|foo/bar|]
---     "{\"platform\": \"Posix\", \"encoding\": \"Utf8\", \"payload\": \"foo/bar\"}"
+--     "{\"platform\": \"Posix\", \"data\": \"foo/bar\"}"
 --
---     >>> parseMaybe (fromTagged (fromTextAs @Utf8)) =<< Data.Aeson.decode "{\"platform\": \"Posix\", \"encoding\": \"Utf8\", \"payload\": \"foo/bar\"}"
+--     >>> parseMaybe (fromTagged (fromTextAs @Utf8)) =<< Data.Aeson.decode "{\"platform\": \"Posix\", \"data\": \"foo/bar\"}"
 --     Just [osstr|foo/bar|]
 --
 -- Tagging an 'OsString' prevents for example that an encoded
@@ -135,7 +135,6 @@ module System.OsString.Aeson (
     ),
     Tag (..),
     Level (..),
-    TagEncoding (..),
     asBase64,
     asBinary,
     asText,
@@ -328,7 +327,7 @@ unsafeToTextEncodingWith enc =
 ----------------------------------------
 
 fromTagged
-    :: (TagEncoding t, Typeable t)
+    :: (Typeable t)
     => (Value -> Parser (As (t :: Tag 'Nested) OsString))
     -> Value
     -> Parser OsString
@@ -336,7 +335,7 @@ fromTagged f = fmap OsString . Platform.fromTagged (fmap (fmap getOsString) . f)
 {-# INLINE fromTagged #-}
 
 fromTaggedAs
-    :: (TagEncoding t, Typeable t)
+    :: (Typeable t)
     => (Value -> Parser (As (t :: Tag 'Nested) OsString))
     -> Value
     -> Parser (As ('Tagged t) OsString)
@@ -344,41 +343,36 @@ fromTaggedAs f =
     fmap (fmap OsString) . Platform.fromTaggedAs (fmap (fmap getOsString) . f)
 {-# INLINE fromTaggedAs #-}
 
-toTagged
-    :: (TagEncoding t)
-    => (As (t :: Tag 'Nested) OsString -> Value) -> OsString -> Value
+toTagged :: (As (t :: Tag 'Nested) OsString -> Value) -> OsString -> Value
 toTagged f = Platform.toTagged (f . fmap OsString) . getOsString
 {-# INLINE toTagged #-}
 
 toTaggedAs
-    :: (TagEncoding t)
-    => (As (t :: Tag 'Nested) OsString -> Value)
+    :: (As (t :: Tag 'Nested) OsString -> Value)
     -> As ('Tagged t) OsString
     -> Value
 toTaggedAs f = Platform.toTaggedAs (f . fmap OsString) . fmap getOsString
 {-# INLINE toTaggedAs #-}
 
 toTaggedM
-    :: (MonadThrow m, TagEncoding t)
+    :: (MonadThrow m)
     => (As (t :: Tag 'Nested) OsString -> m Value) -> OsString -> m Value
 toTaggedM f = Platform.toTaggedM (f . fmap OsString) . getOsString
 {-# INLINE toTaggedM #-}
 
 toTaggedAsM
-    :: (MonadThrow m, TagEncoding t)
+    :: (MonadThrow m)
     => (As t OsString -> m Value) -> As ('Tagged t) OsString -> m Value
 toTaggedAsM f = Platform.toTaggedAsM (f . fmap OsString) . fmap getOsString
 {-# INLINE toTaggedAsM #-}
 
 toTaggedEncoding
-    :: (TagEncoding t)
-    => (As (t :: Tag 'Nested) OsString -> Encoding) -> OsString -> Encoding
+    :: (As (t :: Tag 'Nested) OsString -> Encoding) -> OsString -> Encoding
 toTaggedEncoding f = Platform.toTaggedEncoding (f . fmap OsString) . getOsString
 {-# INLINE toTaggedEncoding #-}
 
 toTaggedEncodingAs
-    :: (TagEncoding t)
-    => (As (t :: Tag 'Nested) OsString -> Encoding)
+    :: (As (t :: Tag 'Nested) OsString -> Encoding)
     -> As ('Tagged t) OsString
     -> Encoding
 toTaggedEncodingAs f =
@@ -386,14 +380,14 @@ toTaggedEncodingAs f =
 {-# INLINE toTaggedEncodingAs #-}
 
 toTaggedEncodingM
-    :: (MonadThrow m, TagEncoding t)
+    :: (MonadThrow m)
     => (As (t :: Tag 'Nested) OsString -> m Encoding) -> OsString -> m Encoding
 toTaggedEncodingM f =
     Platform.toTaggedEncodingM (f . fmap OsString) . getOsString
 {-# INLINE toTaggedEncodingM #-}
 
 toTaggedEncodingAsM
-    :: (MonadThrow m, TagEncoding t)
+    :: (MonadThrow m)
     => (As t OsString -> m Encoding)
     -> As ('Tagged t) OsString
     -> m Encoding

@@ -45,8 +45,7 @@ printJSON x =
                 { confCompare =
                     keyOrder
                         [ "platform"
-                        , "encoding"
-                        , "payload"
+                        , "data"
                         ]
                 }
 

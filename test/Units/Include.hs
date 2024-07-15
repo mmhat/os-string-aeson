@@ -24,7 +24,6 @@ import Data.Typeable (Typeable)
 import System.OsString.PLATFORM_NAME (PLATFORM_STRING)
 import Test.Tasty
 import Test.Tasty.HUnit
-import Type.Reflection (typeRep)
 
 import System.OsString.Aeson.PLATFORM_NAME
 
@@ -37,7 +36,6 @@ tests =
             [ testTagged
                 "Base64"
                 fromBase64As
-                False
                 Text.empty
                 [ taggedBase64 "empty" ""
                 , taggedBase64 "null byte" "AA=="
@@ -45,7 +43,6 @@ tests =
             , testTagged
                 "Binary"
                 fromBinaryAs
-                False
                 ([] :: [Word])
                 [ taggedBinary "empty" []
                 , taggedBinary "null byte" [0]
@@ -53,7 +50,6 @@ tests =
             , testTagged
                 "Text"
                 (fromTextAs @Unicode)
-                True
                 Text.empty
                 [ taggedText "empty" ""
                 , taggedText "null byte" "\NUL"
@@ -63,69 +59,45 @@ tests =
 
 testTagged
     :: forall (t :: Tag 'Nested) a
-     . (ToJSON a, TagEncoding t, Typeable t)
+     . (ToJSON a, Typeable t)
     => TestName
     -> (Value -> Parser (As t PLATFORM_STRING))
-    -> Bool
     -> a
     -> [TestTree]
     -> TestTree
-testTagged name parse needsEncoding emptyPayload others =
+testTagged name parse data_ others =
     testGroup name $
-        [ unit_tagged_noPlatform parse
-        , unit_tagged_noEncoding needsEncoding emptyPayload parse
+        [ unit_tagged_noPlatform parse data_
         , unit_tagged_noPayload parse
         ]
             <> others
 
 unit_tagged_noPlatform
-    :: forall (t :: Tag 'Nested)
-     . (TagEncoding t, Typeable t)
+    :: forall (t :: Tag 'Nested) a
+     . (ToJSON a, Typeable t)
     => (Value -> Parser (As t PLATFORM_STRING))
+    -> a
     -> TestTree
-unit_tagged_noPlatform parse = testCase "no platform" $ do
+unit_tagged_noPlatform parse data_ = testCase "no platform" $ do
     let
         value =
             Aeson.object
-                [ "encoding" .= show (typeRep @(TagEncoding t))
-                , "payload" .= ([] :: [Word])
+                [ "data" .= data_
                 ]
     let
         actual = Aeson.parseMaybe (fromTagged parse) value
     assertBool "parse should fail" (isNothing actual)
 
-unit_tagged_noEncoding
-    :: forall (t :: Tag 'Nested) a
-     . (ToJSON a, TagEncoding t, Typeable t)
-    => Bool
-    -> a
-    -> (Value -> Parser (As t PLATFORM_STRING))
-    -> TestTree
-unit_tagged_noEncoding needsEncoding emptyPayload parse =
-    testCase "no encoding" $ do
-        let
-            value =
-                Aeson.object
-                    [ "platform" .= (PLATFORM_NAME_DOUBLE :: Text)
-                    , "payload" .= emptyPayload
-                    ]
-        let
-            actual = Aeson.parseMaybe (fromTagged parse) value
-        if needsEncoding
-            then assertBool "parse should fail" (isNothing actual)
-            else assertBool "parse should succeed" (isJust actual)
-
 unit_tagged_noPayload
     :: forall (t :: Tag 'Nested)
-     . (TagEncoding t, Typeable t)
+     . (Typeable t)
     => (Value -> Parser (As t PLATFORM_STRING))
     -> TestTree
-unit_tagged_noPayload parse = testCase "no payload" $ do
+unit_tagged_noPayload parse = testCase "no data" $ do
     let
         value =
             Aeson.object
                 [ "platform" .= (PLATFORM_NAME_DOUBLE :: Text)
-                , "encoding" .= show (typeRep @(TagEncoding t))
                 ]
     let
         actual = Aeson.parseMaybe (fromTagged parse) value
@@ -142,18 +114,17 @@ taggedText = taggedHelper (fromTextAs @Unicode)
 
 taggedHelper
     :: forall (t :: Tag 'Nested) a
-     . (ToJSON a, TagEncoding t, Typeable t)
+     . (ToJSON a, Typeable t)
     => (Value -> Parser (As t PLATFORM_STRING))
     -> TestName
     -> a
     -> TestTree
-taggedHelper parse name payload = testCase name $ do
+taggedHelper parse name data_ = testCase name $ do
     let
         value =
             Aeson.object
                 [ "platform" .= (PLATFORM_NAME_DOUBLE :: Text)
-                , "encoding" .= tagEncoding @_ @t
-                , "payload" .= payload
+                , "data" .= data_
                 ]
     let
         actual = Aeson.parseMaybe (fromTagged parse) value

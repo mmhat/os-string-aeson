@@ -133,7 +133,6 @@ module System.OsString.Aeson.PLATFORM_NAME (
     ),
     Tag (..),
     Level (..),
-    TagEncoding (..),
     asBase64,
     asBinary,
     asText,
@@ -162,10 +161,8 @@ import Data.Aeson.Types (
     Parser,
     ToJSON (..),
     ToJSONKey (..),
-    Value (Null),
-    (.!=),
+    Value,
     (.:),
-    (.:?),
     (.=),
  )
 import Data.Aeson.Types qualified as Aeson
@@ -538,16 +535,14 @@ unsafeToTextEncodingWith enc =
 
 fromTagged
     :: forall (t :: Tag 'Nested)
-     . (TagEncoding t, Typeable t)
+     . (Typeable t)
     => (Value -> Parser (As t PLATFORM_STRING))
     -> Value
     -> Parser PLATFORM_STRING
 fromTagged decode = Aeson.withObject name $ \obj -> do
     platform <- obj .: "platform"
     guard (platform == (PLATFORM_NAME_DOUBLE :: Text))
-    encoding <- obj .:? "encoding" .!= Null
-    guard (encoding == tagEncoding @_ @t)
-    unAs <$> (decode =<< (obj .: "payload"))
+    unAs <$> (decode =<< (obj .: "data"))
     where
         name =
             show
@@ -561,7 +556,7 @@ fromTagged decode = Aeson.withObject name $ \obj -> do
 
 fromTaggedAs
     :: forall (t :: Tag 'Nested)
-     . (TagEncoding t, Typeable t)
+     . (Typeable t)
     => (Value -> Parser (As t PLATFORM_STRING))
     -> Value
     -> Parser
@@ -574,27 +569,22 @@ fromTaggedAs decode = fmap As . fromTagged decode
 
 toTagged
     :: forall (t :: Tag 'Nested)
-     . (TagEncoding t)
-    => (As t PLATFORM_STRING -> Value)
+     . (As t PLATFORM_STRING -> Value)
     -> PLATFORM_STRING
     -> Value
 toTagged encode x =
     let
-        payload = (encode . coerce) x
+        data_ = (encode . coerce) x
     in
-        Aeson.object $
+        Aeson.object
             [ "platform" .= (PLATFORM_NAME_DOUBLE :: Text)
-            , "payload" .= payload
+            , "data" .= data_
             ]
-                <> case tagEncoding @_ @t of
-                    Null -> []
-                    encoding -> ["encoding" .= encoding]
 {-# INLINE toTagged #-}
 
 toTaggedAs
     :: forall (t :: Tag 'Nested)
-     . (TagEncoding t)
-    => (As t PLATFORM_STRING -> Value)
+     . (As t PLATFORM_STRING -> Value)
     -> As
         ('Tagged t)
         PLATFORM_STRING
@@ -604,24 +594,21 @@ toTaggedAs encode = toTagged encode . unAs
 
 toTaggedM
     :: forall (t :: Tag 'Nested) m
-     . (MonadThrow m, TagEncoding t)
+     . (MonadThrow m)
     => (As t PLATFORM_STRING -> m Value)
     -> PLATFORM_STRING
     -> m Value
 toTaggedM encode x = do
-    payload <- (encode . coerce) x
+    data_ <- (encode . coerce) x
     pure . Aeson.object $
         [ "platform" .= (PLATFORM_NAME_DOUBLE :: Text)
-        , "payload" .= payload
+        , "data" .= data_
         ]
-            <> case tagEncoding @_ @t of
-                Null -> []
-                encoding -> ["encoding" .= encoding]
 {-# INLINE toTaggedM #-}
 
 toTaggedAsM
     :: forall (t :: Tag 'Nested) m
-     . (MonadThrow m, TagEncoding t)
+     . (MonadThrow m)
     => (As t PLATFORM_STRING -> m Value)
     -> As
         ('Tagged t)
@@ -632,27 +619,22 @@ toTaggedAsM encode = toTaggedM encode . unAs
 
 toTaggedEncoding
     :: forall (t :: Tag 'Nested)
-     . (TagEncoding t)
-    => (As t PLATFORM_STRING -> Encoding)
+     . (As t PLATFORM_STRING -> Encoding)
     -> PLATFORM_STRING
     -> Encoding
 toTaggedEncoding encode x =
     let
-        payload = (encode . coerce) x
+        data_ = (encode . coerce) x
     in
         Aeson.pairs
             ( "platform" .= (PLATFORM_NAME_DOUBLE :: Text)
-                <> case tagEncoding @_ @t of
-                    Null -> mempty
-                    encoding -> "encoding" .= encoding
-                <> Aeson.pair "payload" payload
+                <> Aeson.pair "data" data_
             )
 {-# INLINE toTaggedEncoding #-}
 
 toTaggedEncodingAs
     :: forall (t :: Tag 'Nested)
-     . (TagEncoding t)
-    => (As t PLATFORM_STRING -> Encoding)
+     . (As t PLATFORM_STRING -> Encoding)
     -> As
         ('Tagged t)
         PLATFORM_STRING
@@ -662,23 +644,20 @@ toTaggedEncodingAs encode = toTaggedEncoding encode . unAs
 
 toTaggedEncodingM
     :: forall (t :: Tag 'Nested) m
-     . (MonadThrow m, TagEncoding t)
+     . (MonadThrow m)
     => (As t PLATFORM_STRING -> m Encoding)
     -> PLATFORM_STRING
     -> m Encoding
 toTaggedEncodingM encode x = do
-    payload <- (encode . coerce) x
+    data_ <- (encode . coerce) x
     pure . Aeson.pairs $
         "platform" .= (PLATFORM_NAME_DOUBLE :: Text)
-            <> case tagEncoding @_ @t of
-                Null -> mempty
-                encoding -> "encoding" .= encoding
-            <> Aeson.pair "payload" payload
+            <> Aeson.pair "data" data_
 {-# INLINE toTaggedEncodingM #-}
 
 toTaggedEncodingAsM
     :: forall (t :: Tag 'Nested) m
-     . (MonadThrow m, TagEncoding t)
+     . (MonadThrow m)
     => (As t PLATFORM_STRING -> m Encoding)
     -> As
         ('Tagged t)
@@ -905,7 +884,7 @@ instance
 ----------------------------------------
 
 instance
-    (FromJSON (As t PLATFORM_STRING), TagEncoding t, Typeable t)
+    (FromJSON (As t PLATFORM_STRING), Typeable t)
     => FromJSON
         ( As
             ('Tagged t)
@@ -916,7 +895,7 @@ instance
     {-# INLINE parseJSON #-}
 
 instance
-    (ToJSON (As t PLATFORM_STRING), TagEncoding t, Typeable t)
+    (ToJSON (As t PLATFORM_STRING), Typeable t)
     => ToJSON
         ( As
             ('Tagged t)
@@ -929,7 +908,7 @@ instance
     {-# INLINE toEncoding #-}
 
 instance
-    (FromJSON (As t PLATFORM_STRING), TagEncoding t, Typeable t)
+    (FromJSON (As t PLATFORM_STRING), Typeable t)
     => FromJSONKey
         ( As
             ('Tagged t)
@@ -940,7 +919,7 @@ instance
     {-# INLINE fromJSONKey #-}
 
 instance
-    (ToJSON (As t PLATFORM_STRING), TagEncoding t, Typeable t)
+    (ToJSON (As t PLATFORM_STRING), Typeable t)
     => ToJSONKey
         ( As
             ('Tagged t)
