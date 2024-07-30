@@ -3,6 +3,8 @@ branches:       main
 tests:          True
 benchmarks:     True
 
+doctest:        True
+
 ghcup-jobs:     True
 jobs-selection: any
 
