@@ -64,11 +64,26 @@ library
     base,
     os-string-aeson-internal,
 
+  -- Dependencies for doctests
+  build-depends:
+    aeson
+
   -- cabal-gild: discover ./src/ --exclude=Setup.hs --exclude=**/Include.hs
   exposed-modules:
     System.OsString.Aeson
     System.OsString.Aeson.Posix
     System.OsString.Aeson.Windows
+
+  -- Only needed for doctests
+  if flag(old-os-string)
+    build-depends:
+      filepath >=1.4.100.0 && <1.5,
+      os-string <2,
+
+    ghc-options: -Wno-deprecations
+  else
+    build-depends:
+      os-string >=2.0.0 && <2.1
 
 library os-string-aeson-internal
   import: language

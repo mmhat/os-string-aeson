@@ -43,7 +43,7 @@ import Data.Aeson.Types (
     (.:),
     (.=),
  )
-import Data.Aeson.Types qualified as Aeson
+import Data.Aeson.Types qualified
 import Data.Base64.Types qualified as Base64
 import Data.ByteString.Short (ShortByteString)
 import Data.ByteString.Short.Base64 qualified as Base64
@@ -65,6 +65,14 @@ import System.IO (utf16le)
 #else
 import System.IO (utf8)
 #endif
+
+-- $setup
+-- >>> :set -XOverloadedLists
+-- >>> :set -XOverloadedStrings
+-- >>> :set -XQuasiQuotes
+-- >>> :set -XTypeApplications
+-- >>> import Data.Aeson.Types (Value (..))
+-- >>> import System.OsString.PLATFORM_NAME (pstr)
 
 --------------------------------------------------------------------------------
 -- Conversion functions
@@ -105,8 +113,8 @@ defaultToEncoding x =
 
 -- | Try to parse a PLATFORM_STRING_DOUBLE from the base64-text representation:
 --
---     >>> fromBase64 BASE64_EXAMPLE
---     [pstr|foo|]
+--     >>> Data.Aeson.Types.parseMaybe fromBase64 (String BASE64_EXAMPLE)
+--     Just "foo"
 fromBase64 :: Value -> Parser PLATFORM_STRING
 fromBase64 value =
     either (fail . Text.unpack) (pure . coerce)
@@ -130,7 +138,7 @@ fromBase64As = fmap As . fromBase64
 -- | Encode a PLATFORM_STRING_DOUBLE in the base64-text representation:
 --
 --     >>> toBase64 [pstr|foo|]
---     BASE64_EXAMPLE
+--     String BASE64_EXAMPLE
 toBase64 :: PLATFORM_STRING -> Value
 toBase64 =
     toJSON
@@ -174,8 +182,8 @@ toBase64EncodingAs = toBase64Encoding . unAs
 
 -- | Try to parse a PLATFORM_STRING_DOUBLE from the binary representation:
 --
---     >>> fromBinary "[102,111,111]"
---     [pstr|foo|]
+--     >>> Data.Aeson.Types.parseMaybe fromBinary (Array [Number 102,Number 111,Number 111])
+--     Just "foo"
 fromBinary :: Value -> Parser PLATFORM_STRING
 fromBinary value =
     OsString.pack
@@ -198,7 +206,7 @@ fromBinaryAs = fmap As . fromBinary
 -- | Encode a PLATFORM_STRING_DOUBLE in the binary representation:
 --
 --     >>> toBinary [pstr|foo|]
---     "[102,111,111]"
+--     Array [Number 102.0,Number 111.0,Number 111.0]
 toBinary :: PLATFORM_STRING -> Value
 toBinary =
     toJSON
@@ -240,8 +248,8 @@ toBinaryEncodingAs = toBinaryEncoding . unAs
 
 -- | Try to parse a PLATFORM_STRING_DOUBLE from the textual representation:
 --
---     >>> fromText @Unicode "foo"
---     [pstr|foo|]
+--     >>> Data.Aeson.Types.parseMaybe (fromText @Unicode) "foo"
+--     Just "foo"
 fromText
     :: forall enc
      . (IsTextEncoding enc)
@@ -275,8 +283,8 @@ fromTextWith enc = unsafeEncodeWith enc <=< parseJSON
 
 -- | Encode a PLATFORM_STRING_DOUBLE in the textual representation:
 --
---     >>> toText [pstr|foo|]
---     "foo"
+--     >>> toText @Unicode [pstr|foo|]
+--     String "foo"
 toText
     :: forall enc m
      . (IsTextEncoding enc, MonadThrow m)
@@ -416,7 +424,7 @@ fromTagged
     => (Value -> Parser (As t PLATFORM_STRING))
     -> Value
     -> Parser PLATFORM_STRING
-fromTagged decode = Aeson.withObject name $ \obj -> do
+fromTagged decode = Data.Aeson.Types.withObject name $ \obj -> do
     platform <- obj .: "platform"
     guard (platform == (PLATFORM_NAME_DOUBLE :: Text))
     unAs <$> (decode =<< (obj .: "data"))
@@ -453,7 +461,7 @@ toTagged encode x =
     let
         data_ = (encode . coerce) x
     in
-        Aeson.object
+        Data.Aeson.Types.object
             [ "platform" .= (PLATFORM_NAME_DOUBLE :: Text)
             , "data" .= data_
             ]
@@ -477,7 +485,7 @@ toTaggedM
     -> m Value
 toTaggedM encode x = do
     data_ <- (encode . coerce) x
-    pure . Aeson.object $
+    pure . Data.Aeson.Types.object $
         [ "platform" .= (PLATFORM_NAME_DOUBLE :: Text)
         , "data" .= data_
         ]
@@ -600,7 +608,7 @@ deriving via
 --    For example:
 --
 --    >>> Data.Aeson.encode (AsBinary [pstr|foo/bar|])
---    "[102,111,111,92,98,97,114]"
+--    "[102,111,111,47,98,97,114]"
 --
 --  * A path wrapped in a 'AsText' uses 'fromTextAs' and 'unsafeToText' in its
 --    'FromJSON' instance and 'ToJSON' instance respectively.
@@ -642,7 +650,7 @@ instance
         )
     where
     -- TODO: Use FromJSONKeyTextParser here
-    fromJSONKey = Aeson.FromJSONKeyValue parseJSON
+    fromJSONKey = Data.Aeson.Types.FromJSONKeyValue parseJSON
     {-# INLINE fromJSONKey #-}
 
 instance
@@ -653,7 +661,7 @@ instance
         )
     where
     -- TODO: Use toJSONKeyText here
-    toJSONKey = Aeson.ToJSONKeyValue toJSON toEncoding
+    toJSONKey = Data.Aeson.Types.ToJSONKeyValue toJSON toEncoding
     {-# INLINE toJSONKey #-}
 
 ----------------------------------------
@@ -689,7 +697,7 @@ instance
             PLATFORM_STRING
         )
     where
-    fromJSONKey = Aeson.FromJSONKeyValue parseJSON
+    fromJSONKey = Data.Aeson.Types.FromJSONKeyValue parseJSON
     {-# INLINE fromJSONKey #-}
 
 instance
@@ -699,7 +707,7 @@ instance
             PLATFORM_STRING
         )
     where
-    toJSONKey = Aeson.ToJSONKeyValue toJSON toEncoding
+    toJSONKey = Data.Aeson.Types.ToJSONKeyValue toJSON toEncoding
     {-# INLINE toJSONKey #-}
 
 ----------------------------------------
@@ -739,7 +747,7 @@ instance
         )
     where
     fromJSONKey =
-        Aeson.FromJSONKeyTextParser
+        Data.Aeson.Types.FromJSONKeyTextParser
             (fmap As . unsafeEncodeWith (textEncoding @enc) . Text.unpack)
     {-# INLINE fromJSONKey #-}
 
@@ -752,7 +760,7 @@ instance
         )
     where
     toJSONKey =
-        Aeson.toJSONKeyText
+        Data.Aeson.Types.toJSONKeyText
             (Text.pack . unsafeDecodeWith (textEncoding @enc) . unAs)
     {-# INLINE toJSONKey #-}
 
@@ -792,7 +800,7 @@ instance
             PLATFORM_STRING
         )
     where
-    fromJSONKey = Aeson.FromJSONKeyValue parseJSON
+    fromJSONKey = Data.Aeson.Types.FromJSONKeyValue parseJSON
     {-# INLINE fromJSONKey #-}
 
 instance
@@ -803,7 +811,7 @@ instance
             PLATFORM_STRING
         )
     where
-    toJSONKey = Aeson.ToJSONKeyValue toJSON toEncoding
+    toJSONKey = Data.Aeson.Types.ToJSONKeyValue toJSON toEncoding
     {-# INLINE toJSONKey #-}
 
 --------------------------------------------------------------------------------
