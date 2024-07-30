@@ -7,7 +7,7 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE PolyKinds #-}
 
-module System.OsString.Aeson.Types where
+module System.OsString.Aeson.Internal.Types where
 
 import Data.Kind (Type)
 import Data.Typeable (Typeable)

@@ -16,6 +16,7 @@ license-file: LICENSE
 build-type: Simple
 -- cabal-gild: discover --include=**/Include.hs
 extra-source-files:
+  os-string-aeson-internal/System/OsString/Aeson/Internal/Include.hs
   src/System/OsString/Aeson/Include.hs
   test/Properties/Include.hs
   test/Units/Include.hs
@@ -55,15 +56,8 @@ library
   import: language
   hs-source-dirs: src/
   build-depends:
-    aeson >=1.0.0.0 && <2.3,
-    base >=4.14 && <4.21,
-    base64 >=1.0 && <1.1,
-    bytestring >=0.12 && <0.13,
-    exceptions >=0.4 && <0.11,
-    os-string >=2.0.0 && <2.1,
+    base,
     os-string-aeson-internal,
-    text >=0.1 && <2.2,
-    text-short >=0.1 && <0.2,
 
   -- cabal-gild: discover ./src/ --exclude=Setup.hs --exclude=**/Include.hs
   exposed-modules:
@@ -79,11 +73,18 @@ library os-string-aeson-internal
     aeson >=1.0.0.0 && <2.3,
     base >=4.14 && <4.21,
     base64 >=1.0 && <1.1,
+    bytestring >=0.12 && <0.13,
+    exceptions >=0.4 && <0.11,
+    os-string >=2.0.0 && <2.1,
     text >=0.1 && <2.2,
+    text-short >=0.1 && <0.2,
 
-  -- cabal-gild: discover ./os-string-aeson-internal/ --exclude=Setup.hs
+  -- cabal-gild: discover ./os-string-aeson-internal/ --exclude=Setup.hs --exclude=**/Include.hs
   exposed-modules:
-    System.OsString.Aeson.Types
+    System.OsString.Aeson.Internal
+    System.OsString.Aeson.Internal.Posix
+    System.OsString.Aeson.Internal.Types
+    System.OsString.Aeson.Internal.Windows
 
 test-suite examples
   import: language
