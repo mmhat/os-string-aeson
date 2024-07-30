@@ -12,60 +12,11 @@
 --     BASE64_EXAMPLE = "..."
 {-# LANGUAGE CPP #-}
 
--- | This module provides the necessary tools to decode\/encode a
--- PLATFORM_STRING_SINGLE from\/to a 'Value'.
---
--- A PLATFORM_STRING_SINGLE are is a bunch of bytes with no encoding information
--- attached. That means that if you pass such a path for example to 'toJSON' it
--- is not clear which representation we can choose for JSON. If the path was
--- Unicode-encoded we could convert it to a JSON 'Aeson.String' like it is done
--- for 'String', but we cannot assume that for the types found in the
--- @os-string@ package. Hence there are no \"obvious\" 'FromJSON' and 'ToJSON'
--- for PLATFORM_STRING_SINGLE.
---
--- __What this module provides:__
--- This module defines functions and types suitable to convert a
--- PLATFORM_STRING_SINGLE from\/to four JSON representations - Two basic ones
--- and two safe ones. We consider the basic ones first:
---
--- * The /binary/ representation encodes\/decodes a PLATFORM_STRING_SINGLE as a
---   sequence of numbers in JSON, where each number represents the numeric
---   encoding of one PLATFORM_CHAR_SINGLE:
---
---     >>> Data.Aeson.encode (toBinary [pstr|foo/bar|])
---     "[102,111,111,92,98,97,114]"
---
---     Note that this is a total encoding.
---
--- * The /textual/ representation tries to encode\/decode a
---   PLATFORM_STRING_SINGLE as a string in JSON. In order to do that we also
---   have to provide an encoding.
---
---     Some functions in this module take a 'System.IO.TextEncoding' as an
---     argument and you use those defined in "System.IO" or
---     "System.OsString.Encoding":
---
---     >>> Data.Aeson.encode (unsafeToTextWith unicode [pstr|foo/bar|])
---     "\"foo/bar\""
---
---     Other functions expect that the encoding is passed on the type-level
---     (you need the @TypeApplications@ language extensions for this to work):
---
---     >>> Data.Aeson.encode (unsafeToText @Unicode [pstr|foo/bar|])
---     "\"foo/bar\""
---
---     This module provides the encoding types 'Utf8', 'Utf16LE' and 'Unicode',
---     where the latter one of the former two depending on the platform.
---
---     __WARNING:__ Decoding and encoding may fail with a
---     'System.OsString.EncodingException'!
---     The examples above work because 'pstr' encodes to the appropriate Unicode
---     encoding for the particular platform.
---
--- TODO: Write something about the tagged encodings.
+-- | This module provides the same interface as 'System.OsString.Aeson', but for
+-- PLATFORM_STRING_SINGLE. Please see the documentation of
+-- 'System.OsString.Aeson' on how to use this module.
 module System.OsString.Aeson.PLATFORM_NAME
   ( -- * Conversion functions
-    -- $funtions
     defaultParseJSON,
     defaultToJSON,
     defaultToEncoding,
@@ -108,7 +59,6 @@ module System.OsString.Aeson.PLATFORM_NAME
     unsafeToTextEncodingWith,
 
     -- * Conversion using newtype wrappers
-    -- $newtypes
     As
       ( As,
         AsBase64,
@@ -145,23 +95,3 @@ import System.OsString.Aeson.Internal.Windows
 #else
 import System.OsString.Aeson.Internal.Posix
 #endif
-
--- $functions
--- TODO
-
--- $newtypes
--- In addition to the conversion functions this module provides newtype wrappers
--- to control the conversion between JSON value and a PLATFORM_STRING_SINGLE:
---
---  * A path wrapped in a 'AsBinary' uses 'fromBinaryAs' and 'toBinaryAs' in its
---    'FromJSON' instance and 'ToJSON' instance respectively.
---    For example:
---
---    >>> Data.Aeson.encode (AsBinary [pstr|foo/bar|])
---    "[102,111,111,92,98,97,114]"
---
---  * A path wrapped in a 'AsText' uses 'fromTextAs' and 'unsafeToText' in its
---    'FromJSON' instance and 'ToJSON' instance respectively.
---    The encoding used is determined by the type parameter of 'AsText', i.e.
---    a @AsText enc PLATFORM_STRING@ will be encoded to the textual
---    representation using the encoding @enc@.

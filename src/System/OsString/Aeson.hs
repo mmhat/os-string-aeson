@@ -2,7 +2,19 @@
 
 -- | As laid out in [this blog post](https://hasufell.github.io/posts/2024-05-07-ultimate-string-guide.html#to-json),
 -- there are several possible encodings for an 'OsString' in JSON.
--- This library provides the boilerplate for two basic encodings:
+-- This library provides the boilerplate for three basic encodings:
+--
+-- * The /base64/ representation encodes\/decodes an 'OsString' as a
+--   base64-encoded string in JSON:
+--
+--     >>> Data.Aeson.encode (toBase64 [osstr|foo/bar|])
+--     "Zm9vL2Jhcg=="
+--
+--     >>> Data.Aeson.Types.parseMaybe fromBase64 =<< Data.Aeson.decode "\"Zm9vL2Jhcg==\""
+--     Just [osstr|foo/bar|]
+--
+--     Note that this is a total encoding: Encoding never fails and so does
+--     decoding, provided that the JSON string is a valid base64 encoding.
 --
 -- * The /binary/ representation encodes\/decodes an 'OsString' as a
 --   sequence of numbers in JSON, where each number represents the numeric
@@ -30,7 +42,7 @@
 --     >>> Data.Aeson.encode <$> toTextWith unicode [osstr|foo/bar|]
 --     "\"foo/bar\""
 --
---     >>> parseMaybe (fromTextWith unicode) =<< Data.Aeson.decode "\"foo/bar\""
+--     >>> Data.Aeson.Types.parseMaybe (fromTextWith unicode) =<< Data.Aeson.decode "\"foo/bar\""
 --     Just [osstr|foo/bar|]
 --
 --     Other functions expect that the encoding is passed on the type-level
@@ -39,7 +51,7 @@
 --     >>> Data.Aeson.encode <$> toText @Unicode [osstr|foo/bar|]
 --     "\"foo/bar\""
 --
---     >>> parseMaybe (fromText @Unicode) =<< Data.Aeson.decode "\"foo/bar\""
+--     >>> Data.Aeson.Types.parseMaybe (fromText @Unicode) =<< Data.Aeson.decode "\"foo/bar\""
 --     Just [osstr|foo/bar|]
 --
 --     This module provides the encoding types 'Utf8', 'Utf16LE' and 'Unicode',
@@ -50,9 +62,9 @@
 --     The examples above work because 'osstr' encodes to the appropriate
 --     Unicode encoding for the particular platform.
 --
--- In addition to the two basic representations above there is a /tagged/
--- flavour of both: That is, the array of numbers or string is wrapped in an
--- object that provides additional information about the 'OsString'. For
+-- In addition to the three basic representations above there is a /tagged/
+-- flavour for each of those: That is, the array of numbers or string is wrapped
+-- in an object that provides additional information about the 'OsString'. For
 -- example:
 --
 --     >>> Data.Aeson.encode <$> toTaggedM (toTextAs @Utf8) [osstr|foo/bar|]
@@ -61,9 +73,12 @@
 --     >>> parseMaybe (fromTagged (fromTextAs @Utf8)) =<< Data.Aeson.decode "{\"platform\": \"Posix\", \"data\": \"foo/bar\"}"
 --     Just [osstr|foo/bar|]
 --
--- Tagging an 'OsString' prevents for example that an encoded
--- 'System.OsString.Posix.PosixPath' is mistakenly interpreted as
--- 'System.OsString.Windows.WindowsString'.
+-- Tagging an 'OsString' tries to solve the following issues of the basic representations:
+--
+-- * It prevents for example that an encoded 'System.OsString.Posix.PosixPath'
+--   is mistakenly interpreted as 'System.OsString.Windows.WindowsString'.
+--
+-- * It prevents that a base64-encoded string is interpreted as plain text value.
 --
 -- Both "System.OsString.Aeson.Posix" and "System.OsString.Aeson.Windows"
 -- provide the same interface as this module, but for
