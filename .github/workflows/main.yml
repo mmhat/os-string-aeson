@@ -73,9 +73,15 @@ jobs:
       - name: "Run doctests"
         run: |
           cabal install --ignore-project --installdir ~/.local/bin doctest
-          doctest --version
-          cabal repl --with-compiler doctest 'os-string-aeson:lib:os-string-aeson-internal'
-          cabal repl --with-compiler doctest 'os-string-aeson:lib:os-string-aeson'
+          if [[ "${{ runner.os }}" == 'Windows' ]]
+          then
+            doctest="$HOME/.local/bin/doctest.exe"
+          else
+            doctest="$HOME/.local/bin/doctest"
+          fi
+          $doctest --version
+          cabal repl --with-compiler $doctest 'os-string-aeson:lib:os-string-aeson-internal'
+          cabal repl --with-compiler $doctest 'os-string-aeson:lib:os-string-aeson'
 
       - name: "Check cabal file"
         run: cabal check
