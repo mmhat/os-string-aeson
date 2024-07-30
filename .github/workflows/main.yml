@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Extract the tested GHC versions
         id: set-matrix
-        uses: kleidukos/get-tested@v0.1.7
+        uses: kleidukos/get-tested@v0.1.7.1
         with:
           cabal-file: os-string-aeson.cabal
           ubuntu-version: "latest"
