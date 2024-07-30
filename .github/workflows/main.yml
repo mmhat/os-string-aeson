@@ -71,6 +71,7 @@ jobs:
         run: cabal test all
 
       - name: "Run doctests"
+        shell: bash
         run: |
           cabal install --ignore-project --installdir ~/.local/bin doctest
           if [[ "${{ runner.os }}" == 'Windows' ]]
