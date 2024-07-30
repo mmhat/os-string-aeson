@@ -18,7 +18,7 @@
 --     >>> Data.Aeson.encode (toBase64 [osstr|foo/bar|])
 --     BASE64_EXAMPLE
 --
---     >>> Data.Aeson.Types.parseMaybe fromBase64 =<< Data.Aeson.decode "\"Zm9vL2Jhcg==\""
+--     >>> Data.Aeson.Types.parseMaybe fromBase64 =<< Data.Aeson.decode BASE64_EXAMPLE
 --     Just "foo/bar"
 --
 --     Note that this is a total encoding: Encoding never fails and so does
