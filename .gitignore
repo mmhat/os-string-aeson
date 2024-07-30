@@ -1,5 +1,6 @@
 .envrc
 .vimrc.local
+.stack-work/
 .tasty-rerun-log.*
 cabal.project.local
 dist-newstyle/

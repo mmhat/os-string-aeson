@@ -1,0 +1,17 @@
+resolver: lts-22.31
+
+extra-deps:
+  - data-fix-0.3.2
+  - hashable-1.4.3.0
+  - semialign-1.3
+  - text-short-0.1.5
+  - these-1.2
+  - base64-1.0@sha256:ab8084608505f30d6cf7dd790271f927fd8a00956c5e7f5546f5cf56b298022c,2991
+  - os-string-1.0.0@sha256:f1582da15c52761681da87d98c854a0db54049f34d59f74cfec4cc56ad8fbc05,1852
+
+flags:
+  os-string-aeson:
+    old-os-string: true
+
+ghc-options:
+  os-string-aeson: -Wno-deprecations
