@@ -1,5 +1,13 @@
 -- TODO: Module header here
 
+{-# LANGUAGE CPP #-}
+
+#if defined(mingw32_HOST_OS)
+#define BASE64_EXAMPLE "\"ZgBvAG8ALwBiAGEAcgA=\""
+#else
+#define BASE64_EXAMPLE "\"Zm9vL2Jhcg==\""
+#endif
+
 -- | As laid out in [this blog post](https://hasufell.github.io/posts/2024-05-07-ultimate-string-guide.html#to-json),
 -- there are several possible encodings for an 'OsString' in JSON.
 -- This library provides the boilerplate for three basic encodings:
@@ -8,7 +16,7 @@
 --   base64-encoded string in JSON:
 --
 --     >>> Data.Aeson.encode (toBase64 [osstr|foo/bar|])
---     "\"Zm9vL2Jhcg==\""
+--     BASE64_EXAMPLE
 --
 --     >>> Data.Aeson.Types.parseMaybe fromBase64 =<< Data.Aeson.decode "\"Zm9vL2Jhcg==\""
 --     Just "foo/bar"
@@ -162,7 +170,7 @@ import System.IO (TextEncoding)
 import System.OsString.Aeson.Internal
 import System.OsString.Aeson.Internal.Types
 
-#if IS_WINDOWS
+#if defined(mingw32_HOST_OS)
 import System.OsString.Aeson.Internal.Windows qualified as PlatformDependent
 #else
 import System.OsString.Aeson.Internal.Posix qualified as PlatformDependent
