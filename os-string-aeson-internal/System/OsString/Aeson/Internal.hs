@@ -27,7 +27,7 @@ import System.OsString.Aeson.Internal.Types
 import System.OsString.Internal.Types (OsString (..), PlatformString)
 
 #if defined(mingw32_HOST_OS)
-import System.OsString.Aeson.Internal.Windows qualfied as Platform
+import System.OsString.Aeson.Internal.Windows qualified as Platform
 #else
 import System.OsString.Aeson.Internal.Posix qualified as Platform
 #endif
