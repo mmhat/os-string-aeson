@@ -15,8 +15,8 @@
 -- | This module provides the same interface as 'System.OsString.Aeson', but for
 -- PLATFORM_STRING_SINGLE. Please see the documentation of
 -- 'System.OsString.Aeson' on how to use this module.
-module System.OsString.Aeson.PLATFORM_NAME
-  ( -- * Conversion functions
+module System.OsString.Aeson.PLATFORM_NAME (
+    -- * Conversion functions
     defaultParseJSON,
     defaultToJSON,
     defaultToEncoding,
@@ -59,15 +59,15 @@ module System.OsString.Aeson.PLATFORM_NAME
     unsafeToTextEncodingWith,
 
     -- * Conversion using newtype wrappers
-    As
-      ( As,
+    As (
+        As,
         AsBase64,
         AsBinary,
         AsText,
         AsTaggedBase64,
         AsTaggedBinary,
         AsTaggedText
-      ),
+    ),
     Tag (..),
     Level (..),
     asBase64,
@@ -84,7 +84,7 @@ module System.OsString.Aeson.PLATFORM_NAME
     Utf8,
     Utf16LE,
     unicode,
-  )
+)
 where
 
 import System.IO (TextEncoding)

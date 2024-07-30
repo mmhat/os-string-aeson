@@ -84,8 +84,8 @@
 -- provide the same interface as this module, but for
 -- 'System.OsString.Posix.PosixString' and
 -- 'System.OsString.Windows.WindowsString' respectively.
-module System.OsString.Aeson
-  ( -- * Conversion functions
+module System.OsString.Aeson (
+    -- * Conversion functions
     defaultParseJSON,
     defaultToJSON,
     defaultToEncoding,
@@ -128,15 +128,15 @@ module System.OsString.Aeson
     unsafeToTextEncodingWith,
 
     -- * Conversion using newtype wrappers
-    As
-      ( As,
+    As (
+        As,
         AsBase64,
         AsBinary,
         AsText,
         AsTaggedBase64,
         AsTaggedBinary,
         AsTaggedText
-      ),
+    ),
     Tag (..),
     Level (..),
     asBase64,
@@ -153,7 +153,7 @@ module System.OsString.Aeson
     Utf8,
     Utf16LE,
     PlatformDependent.unicode,
-  )
+)
 where
 
 import System.IO (TextEncoding)
