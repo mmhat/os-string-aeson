@@ -1,10 +1,9 @@
-resolver: lts-20.26
+resolver: lts-21.25
 
 extra-deps:
   - base64-1.0@sha256:ab8084608505f30d6cf7dd790271f927fd8a00956c5e7f5546f5cf56b298022c,2991
   - os-string-2.0.6@sha256:7699e7ae9bf74d056a62f384ceef8dfb2aa660f3f7c8016e9703f3b995e5e030,3259
-  - text-2.0.2@sha256:71b5fa8c64d3c1fd0a08f993463220867b08290a2256e94b0952bf0e8f5a45cc,9905
 
 flags:
   os-string-aeson:
-    old-os-string: false
+    os-string: true

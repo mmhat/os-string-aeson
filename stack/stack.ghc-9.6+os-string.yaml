@@ -5,4 +5,4 @@ extra-deps:
 
 flags:
   os-string-aeson:
-    old-os-string: false
+    os-string: true
