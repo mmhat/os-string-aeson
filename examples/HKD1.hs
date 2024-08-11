@@ -1,8 +1,6 @@
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
 module HKD1 (test) where
@@ -26,33 +24,33 @@ data Mapping' f = Mapping
 
 deriving instance Eq Mapping
 
-deriving instance Eq (Mapping' (As 'Binary))
+deriving instance Eq (Mapping' (As Binary))
 
-deriving instance Eq (Mapping' (As ('Text Unicode)))
+deriving instance Eq (Mapping' (As (Textual Unicode)))
 
-deriving instance Eq (Mapping' (As ('Tagged 'Binary)))
+deriving instance Eq (Mapping' (As (Tagged Binary)))
 
-deriving instance Eq (Mapping' (As ('Tagged ('Text Unicode))))
+deriving instance Eq (Mapping' (As (Tagged (Textual Unicode))))
 
-instance FromJSON (Mapping' (As 'Binary))
+instance FromJSON (Mapping' (As Binary))
 
-instance ToJSON (Mapping' (As 'Binary))
+instance ToJSON (Mapping' (As Binary))
 
-instance FromJSON (Mapping' (As ('Text Unicode)))
+instance FromJSON (Mapping' (As (Textual Unicode)))
 
-instance ToJSON (Mapping' (As ('Text Unicode)))
+instance ToJSON (Mapping' (As (Textual Unicode)))
 
-instance FromJSON (Mapping' (As ('Tagged 'Binary)))
+instance FromJSON (Mapping' (As (Tagged Binary)))
 
-instance ToJSON (Mapping' (As ('Tagged 'Binary)))
+instance ToJSON (Mapping' (As (Tagged Binary)))
 
-instance FromJSON (Mapping' (As ('Tagged ('Text Unicode))))
+instance FromJSON (Mapping' (As (Tagged (Textual Unicode))))
 
-instance ToJSON (Mapping' (As ('Tagged ('Text Unicode))))
+instance ToJSON (Mapping' (As (Tagged (Textual Unicode))))
 
-deriving via (CoercibleRep (Mapping' (As ('Text Unicode))) Mapping) instance FromJSON Mapping
+deriving via (CoercibleRep (Mapping' (As (Textual Unicode))) Mapping) instance FromJSON Mapping
 
-deriving via (CoercibleRep (Mapping' (As ('Text Unicode))) Mapping) instance ToJSON Mapping
+deriving via (CoercibleRep (Mapping' (As (Textual Unicode))) Mapping) instance ToJSON Mapping
 
 example :: Mapping
 example =
@@ -65,7 +63,7 @@ testBinary :: IO ()
 testBinary = do
     putStrLn "## Binary"
     let
-        example' :: Mapping' (As 'Binary)
+        example' :: Mapping' (As Binary)
         example' = coerceViaRep example
         json = toJSON example'
     printJSON json
@@ -76,7 +74,7 @@ testTextual :: IO ()
 testTextual = do
     putStrLn "## Textual"
     let
-        example' :: Mapping' (As ('Text Unicode))
+        example' :: Mapping' (As (Textual Unicode))
         example' = coerceViaRep example
         json = toJSON example'
     printJSON json
@@ -87,7 +85,7 @@ testTaggedBinary :: IO ()
 testTaggedBinary = do
     putStrLn "## Tagged Binary"
     let
-        example' :: Mapping' (As ('Tagged 'Binary))
+        example' :: Mapping' (As (Tagged Binary))
         example' = coerceViaRep example
         json = toJSON example'
     printJSON json
@@ -98,7 +96,7 @@ testTaggedTextual :: IO ()
 testTaggedTextual = do
     putStrLn "## Tagged Textual"
     let
-        example' :: Mapping' (As ('Tagged ('Text Unicode)))
+        example' :: Mapping' (As (Tagged (Textual Unicode)))
         example' = coerceViaRep example
         json = toJSON example'
     printJSON json

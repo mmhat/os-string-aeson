@@ -48,14 +48,14 @@ testBinary = do
 
 textualFromJSON :: Value -> Parser Mapping
 textualFromJSON = withObject "Mapping" $ \obj -> do
-    source <- fromText @Unicode =<< obj .: "source"
-    destination <- fromText @Unicode =<< obj .: "destination"
+    source <- fromTextual @Unicode =<< obj .: "source"
+    destination <- fromTextual @Unicode =<< obj .: "destination"
     pure Mapping{..}
 
 textualToJSON :: Mapping -> IO Value
 textualToJSON Mapping{..} = do
-    source' <- toText @Unicode source
-    destination' <- toText @Unicode destination
+    source' <- toTextual @Unicode source
+    destination' <- toTextual @Unicode destination
     pure . object $
         [ "source" .= source'
         , "destination" .= destination'
@@ -93,14 +93,14 @@ testTaggedBinary = do
 
 taggedTextualFromJSON :: Value -> Parser Mapping
 taggedTextualFromJSON = withObject "Mapping" $ \obj -> do
-    source <- fromTagged (fromTextAs @Unicode) =<< obj .: "source"
-    destination <- fromTagged (fromTextAs @Unicode) =<< obj .: "destination"
+    source <- fromTagged (fromTextualAs @Unicode) =<< obj .: "source"
+    destination <- fromTagged (fromTextualAs @Unicode) =<< obj .: "destination"
     pure Mapping{..}
 
 taggedTextualToJSON :: Mapping -> IO Value
 taggedTextualToJSON Mapping{..} = do
-    source' <- toTaggedM (toTextAs @Unicode) source
-    destination' <- toTaggedM (toTextAs @Unicode) destination
+    source' <- toTaggedM (toTextualAs @Unicode) source
+    destination' <- toTaggedM (toTextualAs @Unicode) destination
     pure . object $
         [ "source" .= source'
         , "destination" .= destination'

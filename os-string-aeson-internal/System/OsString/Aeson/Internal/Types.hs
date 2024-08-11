@@ -1,107 +1,91 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE ExplicitForAll #-}
-{-# LANGUAGE GADTs #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE PolyKinds #-}
 
 module System.OsString.Aeson.Internal.Types where
 
-import Data.Kind (Type)
 import Data.Typeable (Typeable)
 import System.IO (TextEncoding, utf16le, utf8)
 
 newtype As (t :: k) a = As {unAs :: a}
     deriving (Eq, Foldable, Functor, Show, Traversable)
 
-data Level
-    = Nested
-    | TopLevel
+data Base64
 
-data Tag :: Level -> Type where
-    Base64 :: Tag a
-    Binary :: Tag a
-    Text :: (enc :: Type) -> Tag a
-    Tagged :: Tag 'Nested -> Tag 'TopLevel
+data Binary
+
+data Textual enc
+
+data Tagged a
 
 #if MIN_TOOL_VERSION_ghc(9,0,0)
-pattern AsBase64
-    :: forall {l :: Level} a. a -> As ('Base64 :: Tag l) a
+pattern AsBase64 :: a -> As Base64 a
 #else
-pattern AsBase64
-    :: forall (l :: Level) a. a -> As ('Base64 :: Tag l) a
+pattern AsBase64 :: a -> As Base64 a
 #endif
 pattern AsBase64 x = As x
 
 {-# COMPLETE AsBase64 #-}
 
 #if MIN_TOOL_VERSION_ghc(9,0,0)
-pattern AsBinary
-    :: forall {l :: Level} a. a -> As ('Binary :: Tag l) a
+pattern AsBinary :: a -> As Binary a
 #else
-pattern AsBinary
-    :: forall (l :: Level) a. a -> As ('Binary :: Tag l) a
+pattern AsBinary :: a -> As Binary a
 #endif
 pattern AsBinary x = As x
 
 {-# COMPLETE AsBinary #-}
 
 #if MIN_TOOL_VERSION_ghc(9,0,0)
-pattern AsText
-    :: forall (enc :: Type) {l :: Level} a
-     . a -> As ('Text enc :: Tag l) a
+pattern AsTextual :: forall enc a . a -> As (Textual enc) a
 #else
-pattern AsText
-    :: forall (enc :: Type) (l :: Level) a
-     . a -> As ('Text enc :: Tag l) a
+pattern AsTextual :: forall enc a . a -> As (Textual enc) a
 #endif
-pattern AsText x = As x
+pattern AsTextual x = As x
 
-{-# COMPLETE AsText #-}
+{-# COMPLETE AsTextual #-}
 
-pattern AsTaggedBase64
-    :: forall a. a -> As ('Tagged 'Base64 :: Tag 'TopLevel) a
+pattern AsTaggedBase64 :: a -> As (Tagged Base64) a
 pattern AsTaggedBase64 x = As x
 
 {-# COMPLETE AsTaggedBase64 #-}
 
-pattern AsTaggedBinary
-    :: forall a. a -> As ('Tagged 'Binary :: Tag 'TopLevel) a
+pattern AsTaggedBinary :: a -> As (Tagged Binary) a
 pattern AsTaggedBinary x = As x
 
 {-# COMPLETE AsTaggedBinary #-}
 
-pattern AsTaggedText
-    :: forall (enc :: Type) a. a -> As ('Tagged ('Text enc) :: Tag 'TopLevel) a
-pattern AsTaggedText x = As x
+pattern AsTaggedTextual :: forall enc a. a -> As (Tagged (Textual enc)) a
+pattern AsTaggedTextual x = As x
 
-{-# COMPLETE AsTaggedText #-}
+{-# COMPLETE AsTaggedTextual #-}
 
-asBase64 :: forall a. As 'Base64 a -> a
+asBase64 :: As Base64 a -> a
 asBase64 (AsBase64 x) = x
 {-# INLINE asBase64 #-}
 
-asBinary :: forall a. As 'Binary a -> a
+asBinary :: As Binary a -> a
 asBinary (AsBinary x) = x
 {-# INLINE asBinary #-}
 
-asText :: forall (enc :: Type) a. As ('Text enc) a -> a
-asText (AsText x) = x
-{-# INLINE asText #-}
+asTextual :: forall enc a. As (Textual enc) a -> a
+asTextual (AsTextual x) = x
+{-# INLINE asTextual #-}
 
-asTaggedBase64 :: forall a. As ('Tagged 'Base64) a -> a
+asTaggedBase64 :: As (Tagged Base64) a -> a
 asTaggedBase64 (AsTaggedBase64 x) = x
 {-# INLINE asTaggedBase64 #-}
 
-asTaggedBinary :: forall a. As ('Tagged 'Binary) a -> a
+asTaggedBinary :: As (Tagged Binary) a -> a
 asTaggedBinary (AsTaggedBinary x) = x
 {-# INLINE asTaggedBinary #-}
 
-asTaggedText :: forall (enc :: Type) a. As ('Tagged ('Text enc)) a -> a
-asTaggedText (AsTaggedText x) = x
-{-# INLINE asTaggedText #-}
+asTaggedTextual :: forall enc a. As (Tagged (Textual enc)) a -> a
+asTaggedTextual (AsTaggedTextual x) = x
+{-# INLINE asTaggedTextual #-}
 
 class (Typeable a) => IsTextEncoding a where
     textEncoding :: TextEncoding

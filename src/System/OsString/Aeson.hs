@@ -39,19 +39,19 @@
 --     'System.IO.TextEncoding' as an argument, and you may use any of those
 --     defined in "System.IO" or "System.OsString.Encoding":
 --
---     >>> Data.Aeson.encode <$> toTextWith unicode [osstr|foo/bar|]
+--     >>> Data.Aeson.encode <$> toTextualWith unicode [osstr|foo/bar|]
 --     "\"foo/bar\""
 --
---     >>> Data.Aeson.Types.parseMaybe (fromTextWith unicode) =<< Data.Aeson.decode "\"foo/bar\""
+--     >>> Data.Aeson.Types.parseMaybe (fromTextualWith unicode) =<< Data.Aeson.decode "\"foo/bar\""
 --     Just [osstr|foo/bar|]
 --
 --     Other functions expect that the encoding is passed on the type-level
 --     (you need the @TypeApplications@ language extensions for this to work):
 --
---     >>> Data.Aeson.encode <$> toText @Unicode [osstr|foo/bar|]
+--     >>> Data.Aeson.encode <$> toTextual @Unicode [osstr|foo/bar|]
 --     "\"foo/bar\""
 --
---     >>> Data.Aeson.Types.parseMaybe (fromText @Unicode) =<< Data.Aeson.decode "\"foo/bar\""
+--     >>> Data.Aeson.Types.parseMaybe (fromTextual @Unicode) =<< Data.Aeson.decode "\"foo/bar\""
 --     Just [osstr|foo/bar|]
 --
 --     This module provides the encoding types 'Utf8', 'Utf16LE' and 'Unicode',
@@ -67,10 +67,10 @@
 -- in an object that provides additional information about the 'OsString'. For
 -- example:
 --
---     >>> Data.Aeson.encode <$> toTaggedM (toTextAs @Utf8) [osstr|foo/bar|]
+--     >>> Data.Aeson.encode <$> toTaggedM (toTextualAs @Utf8) [osstr|foo/bar|]
 --     "{\"platform\": \"Posix\", \"data\": \"foo/bar\"}"
 --
---     >>> parseMaybe (fromTagged (fromTextAs @Utf8)) =<< Data.Aeson.decode "{\"platform\": \"Posix\", \"data\": \"foo/bar\"}"
+--     >>> parseMaybe (fromTagged (fromTextualAs @Utf8)) =<< Data.Aeson.decode "{\"platform\": \"Posix\", \"data\": \"foo/bar\"}"
 --     Just [osstr|foo/bar|]
 --
 -- Tagging an 'OsString' tries to solve the following issues of the basic representations:
@@ -93,9 +93,9 @@ module System.OsString.Aeson (
     fromBase64As,
     fromBinary,
     fromBinaryAs,
-    fromText,
-    fromTextAs,
-    fromTextWith,
+    fromTextual,
+    fromTextualAs,
+    fromTextualWith,
     fromTagged,
     fromTaggedAs,
     toBase64,
@@ -106,12 +106,12 @@ module System.OsString.Aeson (
     toBinaryAs,
     toBinaryEncoding,
     toBinaryEncodingAs,
-    toText,
-    toTextAs,
-    toTextWith,
-    toTextEncoding,
-    toTextEncodingAs,
-    toTextEncodingWith,
+    toTextual,
+    toTextualAs,
+    toTextualWith,
+    toTextualEncoding,
+    toTextualEncodingAs,
+    toTextualEncodingWith,
     toTagged,
     toTaggedAs,
     toTaggedM,
@@ -120,31 +120,33 @@ module System.OsString.Aeson (
     toTaggedEncodingAs,
     toTaggedEncodingM,
     toTaggedEncodingAsM,
-    unsafeToText,
-    unsafeToTextAs,
-    unsafeToTextWith,
-    unsafeToTextEncoding,
-    unsafeToTextEncodingAs,
-    unsafeToTextEncodingWith,
+    unsafeToTextual,
+    unsafeToTextualAs,
+    unsafeToTextualWith,
+    unsafeToTextualEncoding,
+    unsafeToTextualEncodingAs,
+    unsafeToTextualEncodingWith,
 
     -- * Conversion using newtype wrappers
     As (
         As,
         AsBase64,
         AsBinary,
-        AsText,
+        AsTextual,
         AsTaggedBase64,
         AsTaggedBinary,
-        AsTaggedText
+        AsTaggedTextual
     ),
-    Tag (..),
-    Level (..),
+    Base64,
+    Binary,
+    Textual,
+    Tagged,
     asBase64,
     asBinary,
-    asText,
+    asTextual,
     asTaggedBase64,
     asTaggedBinary,
-    asTaggedText,
+    asTaggedTextual,
 
     -- * Text encodings
     TextEncoding,

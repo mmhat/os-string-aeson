@@ -20,7 +20,7 @@ data RepTag = Id | JSON
 
 type family FieldRep (t :: RepTag) (a :: Type) :: Type where
     FieldRep 'Id a = a
-    FieldRep 'JSON OsString = As ('Text Unicode :: Tag 'TopLevel) OsString
+    FieldRep 'JSON OsString = As (Textual Unicode) OsString
     FieldRep 'JSON a = a
 
 type Mapping = Mapping' 'Id

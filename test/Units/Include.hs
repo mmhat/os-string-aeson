@@ -3,11 +3,9 @@
 --     PLATFORM_NAME_DOUBLE = "Posix" | "Windows"
 --     PLATFORM_STRING = PosixPath | WindowsPath
 --     PLATFORM_CHAR = PosixChar | WindowsChar
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 
@@ -49,7 +47,7 @@ tests =
                 ]
             , testTagged
                 "Text"
-                (fromTextAs @Unicode)
+                (fromTextualAs @Unicode)
                 Text.empty
                 [ taggedText "empty" ""
                 , taggedText "null byte" "\NUL"
@@ -58,7 +56,7 @@ tests =
         ]
 
 testTagged
-    :: forall (t :: Tag 'Nested) a
+    :: forall t a
      . (ToJSON a, Typeable t)
     => TestName
     -> (Value -> Parser (As t PLATFORM_STRING))
@@ -73,7 +71,7 @@ testTagged name parse data_ others =
             <> others
 
 unit_tagged_noPlatform
-    :: forall (t :: Tag 'Nested) a
+    :: forall t a
      . (ToJSON a, Typeable t)
     => (Value -> Parser (As t PLATFORM_STRING))
     -> a
@@ -89,7 +87,7 @@ unit_tagged_noPlatform parse data_ = testCase "no platform" $ do
     assertBool "parse should fail" (isNothing actual)
 
 unit_tagged_noPayload
-    :: forall (t :: Tag 'Nested)
+    :: forall t
      . (Typeable t)
     => (Value -> Parser (As t PLATFORM_STRING))
     -> TestTree
@@ -110,10 +108,10 @@ taggedBinary :: TestName -> [Word] -> TestTree
 taggedBinary = taggedHelper fromBinaryAs
 
 taggedText :: TestName -> Text -> TestTree
-taggedText = taggedHelper (fromTextAs @Unicode)
+taggedText = taggedHelper (fromTextualAs @Unicode)
 
 taggedHelper
-    :: forall (t :: Tag 'Nested) a
+    :: forall t a
      . (ToJSON a, Typeable t)
     => (Value -> Parser (As t PLATFORM_STRING))
     -> TestName
