@@ -182,4 +182,8 @@ import System.OsString.Aeson.Internal.Posix qualified as PlatformDependent
 -- >>> :set -XTypeApplications
 -- >>> import Data.Aeson qualified
 -- >>> import System.OsString (osstr)
+#if defined(mingw32_HOST_OS)
+-- >>> import System.OsString.Aeson.Internal.Windows (Unicode, unicode)
+#else
 -- >>> import System.OsString.Aeson.Internal.Posix (Unicode, unicode)
+#endif
