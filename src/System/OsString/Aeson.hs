@@ -4,8 +4,10 @@
 
 #if defined(mingw32_HOST_OS)
 #define BASE64_EXAMPLE "\"ZgBvAG8ALwBiAGEAcgA=\""
+#define TAGGED_EXAMPLE "{\"data\":\"foo/bar\",\"platform\":\"Windows\"}"
 #else
 #define BASE64_EXAMPLE "\"Zm9vL2Jhcg==\""
+#define TAGGED_EXAMPLE "{\"data\":\"foo/bar\",\"platform\":\"Posix\"}"
 #endif
 
 -- | As laid out in [this blog post](https://hasufell.github.io/posts/2024-05-07-ultimate-string-guide.html#to-json),
@@ -76,9 +78,9 @@
 -- example:
 --
 --     >>> Data.Aeson.encode <$> toTaggedM (toTextualAs @Unicode) [osstr|foo/bar|]
---     "{\"data\":\"foo/bar\",\"platform\":\"PLATFORM_NAME\"}"
+--     TAGGED_EXAMPLE
 --
---     >>> Data.Aeson.Types.parseMaybe (fromTagged (fromTextualAs @Unicode)) =<< Data.Aeson.decode "{\"platform\": \"PLATFORM_NAME\", \"data\": \"foo/bar\"}"
+--     >>> Data.Aeson.Types.parseMaybe (fromTagged (fromTextualAs @Unicode)) =<< Data.Aeson.decode TAGGED_EXAMPLE
 --     Just "foo/bar"
 --
 -- Tagging an 'OsString' tries to solve the following issues of the basic representations:
