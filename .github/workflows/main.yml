@@ -41,7 +41,8 @@ jobs:
 
       - name: "Configure the build"
         run: |
-          cabal configure --enable-tests --enable-benchmarks --enable-documentation
+          cabal configure --enable-tests --enable-benchmarks --disable-documentation
+          cabal freeze
           cabal build all --dry-run
 
       - name: "Restore cached dependencies"
@@ -51,13 +52,13 @@ jobs:
           key: ${{ runner.os }}-ghc-${{ steps.setup.outputs.ghc-version }}-cabal-${{ steps.setup.outputs.cabal-version }}
         with:
           path: ${{ steps.setup.outputs.cabal-store }}
-          key: ${{ env.key }}-plan-${{ hashFiles('**/plan.json') }}
-          restore-keys: ${{ env.key }}-
+          key: ${{ env.key }}-plan-${{ hashFiles('dist-newstyle/cache/plan.json') }}
+          restore-keys: ${{ env.key }}-plan-
 
       - name: "Install dependencies"
         # If we had an exact cache hit, the dependencies will be up to date.
         if: steps.cache.outputs.cache-hit != 'true'
-        run: cabal build all --only-dependencies
+        run: cabal build all --only-dependencies --enable-documentation
 
       - name: "Save cached dependencies"
         # Cache dependencies already here, so that we do not have to rebuild them should the subsequent steps fail.
