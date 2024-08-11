@@ -60,8 +60,8 @@ jobs:
 
           if [[ ! -x "${result}" ]]; then
             tmpdir="$(mktemp -d "${RUNNER_TEMP}/doctest.XXXX")"
-            cabal install --ignore-project --installdir "${tmpdir}" doctest
-            installed='doctest'
+            cabal install --ignore-project --installdir "${tmpdir}" --install-method copy doctest
+            installed="${tmpdir}/doctest"
             if [[ "${{ runner.os }}" == 'Windows' ]]; then
               installed="${installed}.exe"
             fi
