@@ -42,7 +42,7 @@ runs:
         result-encoding: string
         script: |
           if (${{ steps.cache.outputs.result }}) {
-            return ${{ step.cache.outputs.result }};
+            return ${{ steps.cache.outputs.result }};
           } else {
             return null;
           }
