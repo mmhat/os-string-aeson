@@ -40,6 +40,7 @@ jobs:
           cabal-update: true
 
       - name: "Install doctest"
+        id: install-doctest
         shell: bash
         run: |
           if [[ "${RUNNER_TEMP}" == '' ]]; then
@@ -70,9 +71,6 @@ jobs:
           "${result}" --version
 
           echo "path=${result}" >> "${GITHUB_OUTPUT}"
-
-      - name: 'STOP HERE'
-        run: exit 1
 
       - name: "Configure the build"
         run: |
@@ -113,16 +111,13 @@ jobs:
       - name: "Run doctests"
         shell: bash
         run: |
-          if [[ "${{ runner.os }}" == 'Windows' ]]
-          then
-            doctest="$HOME/.local/bin/doctest.exe"
-          else
-            doctest="$HOME/.local/bin/doctest"
-          fi
-          cabal install --ignore-project --installdir "$HOME/.local/bin" doctest
-          "${doctest}" --version
-          cabal repl --with-compiler "${doctest}" 'os-string-aeson:lib:os-string-aeson-internal'
-          cabal repl --with-compiler "${doctest}" 'os-string-aeson:lib:os-string-aeson'
+          targets=(
+            'os-string-aeson:lib:os-string-aeson-internal'
+            'os-string-aeson:lib:os-string-aeson'
+          )
+          for target in "${targets[@]}"; do
+            cabal repl --with-compiler "${{ steps.install-doctest.outputs.path }}" "${target}"
+          done
 
       - name: "Check cabal file"
         run: cabal check
