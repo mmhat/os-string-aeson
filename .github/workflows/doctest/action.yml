@@ -1,0 +1,48 @@
+name: "Run doctest on a Cabal package"
+
+inputs:
+  ghc:
+    description: 'Which GHC version to use for doctest'
+    type: string
+    required: true
+  version:
+    description: 'Which version of doctest to use'
+    type: string
+    required: false
+    default: 'latest'
+
+outputs:
+  path:
+    description: "The path to the doctest executable"
+    value: ${{ steps.result.outputs.result }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Check for cached executable"
+      id: cache
+      uses: actions/github-script@v7
+      with:
+        result-encoding: string
+        script: |
+          const tc = require('@actions/tool-cache');
+          return null;
+
+    - name: "Setup Haskell environment"
+      id: setup
+      uses: haskell-actions/setup@v2.7
+      with:
+        ghc-version: "${{ inputs.ghc }}"
+        cabal-update: true
+
+    - name: "Result"
+      id: result
+      uses: actions/github-script@v7
+      with:
+        result-encoding: string
+        script: |
+          if (${{ step.cache.outputs.result }}) {
+            return ${{ step.cache.outputs.result }};
+          } else {
+            return null;
+          }

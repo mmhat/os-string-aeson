@@ -40,7 +40,7 @@ jobs:
           cabal-update: true
 
       - name: "Install doctest"
-        uses: ./.github/workflows/doctest.action.yml
+        uses: ./.github/workflows/doctest
         with:
           ghc: ${{ steps.setup.outputs.ghc-version }}
 
