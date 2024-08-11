@@ -118,7 +118,7 @@ jobs:
             'os-string-aeson:lib:os-string-aeson'
           )
           for target in "${targets[@]}"; do
-            cabal repl --with-compiler "${{ steps.install-doctest.outputs.path }}" "${target}"
+            cabal repl --with-compiler "${{ steps.install-doctest.outputs.path }}" --build-depends aeson "${target}"
           done
 
       - name: "Check cabal file"

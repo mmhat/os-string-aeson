@@ -76,10 +76,6 @@ library
     base,
     os-string-aeson-internal,
 
-  -- Dependencies for doctests
-  build-depends:
-    aeson
-
   -- cabal-gild: discover ./src/ --exclude=Setup.hs --exclude=**/Include.hs
   exposed-modules:
     System.OsString.Aeson
