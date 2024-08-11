@@ -9,7 +9,11 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module System.OsString.Aeson.Internal where
+module System.OsString.Aeson.Internal (
+    module System.OsString.Aeson.Internal,
+    Platform.Unicode,
+    Platform.unicode,
+) where
 
 import Control.Monad.Catch (MonadThrow)
 import Data.Aeson.Types (

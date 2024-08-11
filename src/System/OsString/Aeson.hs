@@ -159,10 +159,10 @@ module System.OsString.Aeson (
     -- * Text encodings
     TextEncoding,
     IsTextEncoding,
-    PlatformDependent.Unicode,
+    Unicode,
     Utf8,
     Utf16LE,
-    PlatformDependent.unicode,
+    unicode,
 )
 where
 
@@ -170,20 +170,9 @@ import System.IO (TextEncoding)
 import System.OsString.Aeson.Internal
 import System.OsString.Aeson.Internal.Types
 
-#if defined(mingw32_HOST_OS)
-import System.OsString.Aeson.Internal.Windows qualified as PlatformDependent
-#else
-import System.OsString.Aeson.Internal.Posix qualified as PlatformDependent
-#endif
-
 -- $setup
 -- >>> :set -XOverloadedStrings
 -- >>> :set -XQuasiQuotes
 -- >>> :set -XTypeApplications
 -- >>> import Data.Aeson qualified
 -- >>> import System.OsString (osstr)
-#if defined(mingw32_HOST_OS)
--- >>> import System.OsString.Aeson.Internal.Windows (Unicode, unicode)
-#else
--- >>> import System.OsString.Aeson.Internal.Posix (Unicode, unicode)
-#endif
