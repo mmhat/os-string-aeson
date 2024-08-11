@@ -40,9 +40,36 @@ jobs:
           cabal-update: true
 
       - name: "Install doctest"
-        uses: ./.github/workflows/doctest
-        with:
-          ghc: ${{ steps.setup.outputs.ghc-version }}
+        shell: bash
+        run: |
+          if [[ "${RUNNER_TEMP}" == '' ]]; then
+            echo 'Expected $RUNNER_TEMP to be defined'
+            exit 1
+          fi
+
+          if [[ "${RUNNER_TOOL_CACHE}" == '' ]]; then
+            echo 'Expected $RUNNER_TOOL_CACHE to be defined'
+            exit 1
+          fi
+
+          doctest="doctest-${{ steps.setup.outputs.ghc-version }}"
+          if [[ "${{ runner.os }}" == 'Windows' ]]; then
+            doctest="${doctest}.exe"
+          fi
+          result="${RUNNER_TOOL_CACHE}/${doctest}"
+
+          if [[ ! -x "${result}" ]]; then
+            tmpdir="$(mktemp -d "${RUNNER_TEMP}/doctest.XXXX")"
+            cabal install --ignore-project --installdir "${tmpdir}" doctest:exe:doctest
+            installed='doctest'
+            if [[ "${{ runner.os }}" == 'Windows' ]]; then
+              installed="${installed}.exe"
+            fi
+            cp "${installed}" "${result}"
+          fi
+          "${result}" --version
+
+          echo "path=${result}" >> "${GITHUB_OUTPUT}"
 
       - name: 'STOP HERE'
         run: exit 1
