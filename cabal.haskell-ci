@@ -1,9 +1,0 @@
-branches:       main
-
-tests:          True
-benchmarks:     True
-
-ghcup-jobs:     True
-jobs-selection: any
-
-installed:      -all

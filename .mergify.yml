@@ -1,0 +1,21 @@
+queue_rules:
+  - name: default
+    conditions:
+      # See https://docs.mergify.io/conditions/#validating-all-status-checks
+      - 'check-success~=.* on ubuntu-latest'
+      - 'check-success~=.* on windows-latest'
+pull_request_rules:
+  - name: 'Automatically merge pull requests'
+    conditions:
+      - 'label=merge me'
+      - '#approved-reviews-by>=1'
+      - '#changes-requested-reviews-by=0'
+    actions:
+      queue:
+        name: default
+        method: squash
+  - name: 'Delete head branch after merge'
+    conditions:
+      - merged
+    actions:
+      delete_head_branch: {}

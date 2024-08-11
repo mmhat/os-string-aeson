@@ -1,5 +1,15 @@
 -- TODO: Module header here
 
+{-# LANGUAGE CPP #-}
+
+#if defined(mingw32_HOST_OS)
+#define BASE64_EXAMPLE "\"ZgBvAG8ALwBiAGEAcgA=\""
+#define TAGGED_EXAMPLE "{\"data\":\"foo/bar\",\"platform\":\"Windows\"}"
+#else
+#define BASE64_EXAMPLE "\"Zm9vL2Jhcg==\""
+#define TAGGED_EXAMPLE "{\"data\":\"foo/bar\",\"platform\":\"Posix\"}"
+#endif
+
 -- | As laid out in [this blog post](https://hasufell.github.io/posts/2024-05-07-ultimate-string-guide.html#to-json),
 -- there are several possible encodings for an 'OsString' in JSON.
 -- This library provides the boilerplate for three basic encodings:
@@ -8,10 +18,10 @@
 --   base64-encoded string in JSON:
 --
 --     >>> Data.Aeson.encode (toBase64 [osstr|foo/bar|])
---     "Zm9vL2Jhcg=="
+--     BASE64_EXAMPLE
 --
---     >>> Data.Aeson.Types.parseMaybe fromBase64 =<< Data.Aeson.decode "\"Zm9vL2Jhcg==\""
---     Just [osstr|foo/bar|]
+--     >>> Data.Aeson.Types.parseMaybe fromBase64 =<< Data.Aeson.decode BASE64_EXAMPLE
+--     Just "foo/bar"
 --
 --     Note that this is a total encoding: Encoding never fails and so does
 --     decoding, provided that the JSON string is a valid base64 encoding.
@@ -21,10 +31,10 @@
 --   encoding of one character:
 --
 --     >>> Data.Aeson.encode (toBinary [osstr|foo/bar|])
---     "[102,111,111,92,98,97,114]"
+--     "[102,111,111,47,98,97,114]"
 --
---     >>> Data.Aeson.Types.parseMaybe fromBinary =<< Data.Aeson.decode "[102,111,111,92,98,97,114]"
---     Just [osstr|foo/bar|]
+--     >>> Data.Aeson.Types.parseMaybe fromBinary =<< Data.Aeson.decode "[102,111,111,47,98,97,114]"
+--     Just "foo/bar"
 --
 --     Note that this is a total encoding: Encoding never fails and so does
 --     decoding, provided that the numbers are valid 'Data.Word.Word8' values
@@ -43,7 +53,7 @@
 --     "\"foo/bar\""
 --
 --     >>> Data.Aeson.Types.parseMaybe (fromTextualWith unicode) =<< Data.Aeson.decode "\"foo/bar\""
---     Just [osstr|foo/bar|]
+--     Just "foo/bar"
 --
 --     Other functions expect that the encoding is passed on the type-level
 --     (you need the @TypeApplications@ language extensions for this to work):
@@ -52,7 +62,7 @@
 --     "\"foo/bar\""
 --
 --     >>> Data.Aeson.Types.parseMaybe (fromTextual @Unicode) =<< Data.Aeson.decode "\"foo/bar\""
---     Just [osstr|foo/bar|]
+--     Just "foo/bar"
 --
 --     This module provides the encoding types 'Utf8', 'Utf16LE' and 'Unicode',
 --     where the latter one of the former two depending on the current platform.
@@ -67,11 +77,11 @@
 -- in an object that provides additional information about the 'OsString'. For
 -- example:
 --
---     >>> Data.Aeson.encode <$> toTaggedM (toTextualAs @Utf8) [osstr|foo/bar|]
---     "{\"platform\": \"Posix\", \"data\": \"foo/bar\"}"
+--     >>> Data.Aeson.encode <$> toTaggedM (toTextualAs @Unicode) [osstr|foo/bar|]
+--     TAGGED_EXAMPLE
 --
---     >>> parseMaybe (fromTagged (fromTextualAs @Utf8)) =<< Data.Aeson.decode "{\"platform\": \"Posix\", \"data\": \"foo/bar\"}"
---     Just [osstr|foo/bar|]
+--     >>> Data.Aeson.Types.parseMaybe (fromTagged (fromTextualAs @Unicode)) =<< Data.Aeson.decode TAGGED_EXAMPLE
+--     Just "foo/bar"
 --
 -- Tagging an 'OsString' tries to solve the following issues of the basic representations:
 --
@@ -151,10 +161,10 @@ module System.OsString.Aeson (
     -- * Text encodings
     TextEncoding,
     IsTextEncoding,
-    PlatformDependent.Unicode,
+    Unicode,
     Utf8,
     Utf16LE,
-    PlatformDependent.unicode,
+    unicode,
 )
 where
 
@@ -162,8 +172,9 @@ import System.IO (TextEncoding)
 import System.OsString.Aeson.Internal
 import System.OsString.Aeson.Internal.Types
 
-#if IS_WINDOWS
-import System.OsString.Aeson.Internal.Windows qualified as PlatformDependent
-#else
-import System.OsString.Aeson.Internal.Posix qualified as PlatformDependent
-#endif
+-- $setup
+-- >>> :set -XOverloadedStrings
+-- >>> :set -XQuasiQuotes
+-- >>> :set -XTypeApplications
+-- >>> import Data.Aeson qualified
+-- >>> import System.OsString (osstr)
