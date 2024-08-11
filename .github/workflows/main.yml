@@ -89,3 +89,20 @@ jobs:
 
       - name: "Build documentation"
         run: cabal haddock all
+
+  # See https://github.com/orgs/community/discussions/26822#discussioncomment-8285141
+  # If you read this and know a better way to accomplish this: Please, file an issue!
+  results:
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    name: "Final Results"
+    needs: [run]
+    steps:
+      - name: "Matrix builds succeed"
+        if: >-
+          ${{
+               contains(needs.*.result, 'failure')
+            || contains(needs.*.result, 'cancelled')
+            || contains(needs.*.result, 'skipped')
+          }}
+        run: exit 1
