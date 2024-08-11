@@ -2,7 +2,8 @@ queue_rules:
   - name: default
     conditions:
       # See https://docs.mergify.io/conditions/#validating-all-status-checks
-      - 'check-success=9.10.1 on ubuntu-latest'
+      - 'check-success~=.* on ubuntu-latest'
+      - 'check-success~=.* on windows-latest'
 pull_request_rules:
   - name: 'Automatically merge pull requests'
     conditions:
