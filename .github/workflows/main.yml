@@ -39,6 +39,14 @@ jobs:
           ghc-version: "${{ matrix.ghc }}"
           cabal-update: true
 
+      - name: "Install doctest"
+        uses: ./.github/workflows/doctest.action.yml
+        with:
+          ghc: ${{ steps.setup.outputs.ghc-version }}
+
+      - name: 'STOP HERE'
+        run: exit 1
+
       - name: "Configure the build"
         run: |
           cabal configure --enable-tests --enable-benchmarks --disable-documentation

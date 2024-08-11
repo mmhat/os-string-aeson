@@ -1,0 +1,35 @@
+name: "Run doctest on a Cabal package"
+
+on:
+  workflow_call:
+    inputs:
+      ghc:
+        description: 'Which GHC version to use for doctest'
+        type: string
+        required: true
+      version:
+        description: 'Which version of doctest to use'
+        type: string
+        required: false
+        default: 'latest'
+
+jobs:
+  run:
+    name: 'Run doctest on a Cabal package'
+    runs-on: 'ubuntu-latest'
+    steps:
+      - name: "Check for cached executable"
+        id: cache
+        uses: actions/github-script@v7
+        with:
+          result-encoding: string
+          script: |
+            const tc = require('@actions/tool-cache');
+            return null;
+
+      - name: "Setup Haskell environment"
+        id: setup
+        uses: haskell-actions/setup@v2.7
+        with:
+          ghc-version: "${{ inputs.ghc }}"
+          cabal-update: true
