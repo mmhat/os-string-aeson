@@ -75,10 +75,10 @@
 -- in an object that provides additional information about the 'OsString'. For
 -- example:
 --
---     >>> Data.Aeson.encode <$> toTaggedM (toTextualAs @Utf8) [osstr|foo/bar|]
---     "{\"data\":\"foo/bar\",\"platform\":\"Posix\"}"
+--     >>> Data.Aeson.encode <$> toTaggedM (toTextualAs @Unicode) [osstr|foo/bar|]
+--     "{\"data\":\"foo/bar\",\"platform\":\"PLATFORM_NAME\"}"
 --
---     >>> Data.Aeson.Types.parseMaybe (fromTagged (fromTextualAs @Utf8)) =<< Data.Aeson.decode "{\"platform\": \"Posix\", \"data\": \"foo/bar\"}"
+--     >>> Data.Aeson.Types.parseMaybe (fromTagged (fromTextualAs @Unicode)) =<< Data.Aeson.decode "{\"platform\": \"PLATFORM_NAME\", \"data\": \"foo/bar\"}"
 --     Just "foo/bar"
 --
 -- Tagging an 'OsString' tries to solve the following issues of the basic representations:
