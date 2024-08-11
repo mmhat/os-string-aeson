@@ -211,7 +211,7 @@ toBinaryEncodingAs = toBinaryEncoding . unAs
 
 -- | Try to parse a PLATFORM_STRING_DOUBLE from the textual representation:
 --
---     >>> Data.Aeson.Types.parseMaybe (fromText @Unicode) "foo"
+--     >>> Data.Aeson.Types.parseMaybe (fromTextual @Unicode) "foo"
 --     Just "foo"
 fromTextual
     :: forall enc
@@ -238,7 +238,7 @@ fromTextualWith enc = unsafeEncodeWith enc <=< parseJSON
 
 -- | Encode a PLATFORM_STRING_DOUBLE in the textual representation:
 --
---     >>> toText @Unicode [pstr|foo|]
+--     >>> toTextual @Unicode [pstr|foo|]
 --     String "foo"
 toTextual
     :: forall enc m
