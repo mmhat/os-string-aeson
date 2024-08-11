@@ -41,7 +41,7 @@ runs:
       with:
         result-encoding: string
         script: |
-          if (${{ step.cache.outputs.result }}) {
+          if (${{ steps.cache.outputs.result }}) {
             return ${{ step.cache.outputs.result }};
           } else {
             return null;
