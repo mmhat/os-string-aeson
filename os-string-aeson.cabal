@@ -53,8 +53,11 @@ common language
 
 common os-string-compat
   if flag(os-string)
+    -- We don't actually need filepath, but we want to make sure that it is not
+    -- <1.5 if it brought into scope by some tool (Looking at you, doctest).
     build-depends:
-      os-string >=2.0.0 && <2.1
+      filepath >=1.5,
+      os-string >=2.0.0 && <2.1,
   else
     build-depends:
       filepath >=1.4.100.0 && <1.6,
