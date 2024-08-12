@@ -9,9 +9,5 @@ extra-deps:
   - text-2.0.2@sha256:71b5fa8c64d3c1fd0a08f993463220867b08290a2256e94b0952bf0e8f5a45cc,9905
   - unix-2.8.5.1@sha256:3f702a252a313a7bcb56e3908a14e7f9f1b40e41b7bdc8ae8a9605a1a8686f06,9808
 
-flags:
-  os-string-aeson:
-    old-os-string: true
-
 ghc-options:
   os-string-aeson: -Wno-deprecations

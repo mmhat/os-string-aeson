@@ -8,9 +8,5 @@ extra-deps:
   - process-1.6.20.0@sha256:2a9393de33f18415fb8f4826957a87a94ffe8840ca8472a9b69dca6de45aca03,2790
   - unix-2.8.5.1@sha256:3f702a252a313a7bcb56e3908a14e7f9f1b40e41b7bdc8ae8a9605a1a8686f06,9808
 
-flags:
-  os-string-aeson:
-    old-os-string: true
-
 ghc-options:
   os-string-aeson: -Wno-deprecations

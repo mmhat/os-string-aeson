@@ -39,6 +39,39 @@ jobs:
           ghc-version: "${{ matrix.ghc }}"
           cabal-update: true
 
+      - name: "Install doctest"
+        id: install-doctest
+        shell: bash
+        run: |
+          if [[ "${RUNNER_TEMP}" == '' ]]; then
+            echo 'Expected $RUNNER_TEMP to be defined'
+            exit 1
+          fi
+
+          if [[ "${RUNNER_TOOL_CACHE}" == '' ]]; then
+            echo 'Expected $RUNNER_TOOL_CACHE to be defined'
+            exit 1
+          fi
+
+          doctest="doctest-${{ steps.setup.outputs.ghc-version }}"
+          if [[ "${{ runner.os }}" == 'Windows' ]]; then
+            doctest="${doctest}.exe"
+          fi
+          result="${RUNNER_TOOL_CACHE}/${doctest}"
+
+          if [[ ! -x "${result}" ]]; then
+            tmpdir="$(mktemp -d "${RUNNER_TEMP}/doctest.XXXX")"
+            cabal install --ignore-project --installdir "${tmpdir}" --install-method copy doctest
+            installed="${tmpdir}/doctest"
+            if [[ "${{ runner.os }}" == 'Windows' ]]; then
+              installed="${installed}.exe"
+            fi
+            cp "${installed}" "${result}"
+          fi
+          "${result}" --version
+
+          echo "path=${result}" >> "${GITHUB_OUTPUT}"
+
       - name: "Configure the build"
         run: |
           cabal configure --enable-tests --enable-benchmarks --disable-documentation
@@ -58,7 +91,9 @@ jobs:
       - name: "Install dependencies"
         # If we had an exact cache hit, the dependencies will be up to date.
         if: steps.cache.outputs.cache-hit != 'true'
-        run: cabal build all --only-dependencies --enable-documentation
+        run: |
+          cabal build all --only-dependencies
+          cabal build all --only-dependencies --enable-documentation
 
       - name: "Save cached dependencies"
         # Cache dependencies already here, so that we do not have to rebuild them should the subsequent steps fail.
@@ -78,16 +113,13 @@ jobs:
       - name: "Run doctests"
         shell: bash
         run: |
-          if [[ "${{ runner.os }}" == 'Windows' ]]
-          then
-            doctest="$HOME/.local/bin/doctest.exe"
-          else
-            doctest="$HOME/.local/bin/doctest"
-          fi
-          cabal install --ignore-project --installdir "$HOME/.local/bin" doctest
-          "${doctest}" --version
-          cabal repl --with-compiler "${doctest}" 'os-string-aeson:lib:os-string-aeson-internal'
-          cabal repl --with-compiler "${doctest}" 'os-string-aeson:lib:os-string-aeson'
+          targets=(
+            'os-string-aeson:lib:os-string-aeson-internal'
+            'os-string-aeson:lib:os-string-aeson'
+          )
+          for target in "${targets[@]}"; do
+            cabal repl --with-compiler "${{ steps.install-doctest.outputs.path }}" --build-depends aeson "${target}"
+          done
 
       - name: "Check cabal file"
         run: cabal check

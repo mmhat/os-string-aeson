@@ -1,0 +1,51 @@
+name: Run linters
+
+on:
+  pull_request: {}
+  push:
+    branches:
+      - "main"
+
+jobs:
+  cabal-gild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Set up cabal-gild'
+        uses: tfausak/cabal-gild-setup-action@v2
+
+      - name: 'Checkout the repository'
+        uses: actions/checkout@v4
+
+      - name: 'Check package'
+        run: cabal-gild --mode check --input os-string-aeson.cabal
+
+  fourmolu:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout the repository'
+        uses: actions/checkout@v4
+
+      - name: 'Check that the source code is formatted'
+        uses: fourmolu/fourmolu-action@v10
+        with:
+          pattern: |
+            src/**/*.hs
+            os-string-aeson-internal/**/*.hs
+            examples/**/*.hs
+            test/**/*.hs
+
+  hlint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout the repository'
+        uses: actions/checkout@v4
+
+      - name: 'Set up HLint'
+        uses: haskell-actions/hlint-setup@v2
+
+      - name: 'Run HLint'
+        uses: haskell-actions/hlint-run@v2
+        with:
+          path: '["src", "os-string-aeson-internal", "examples", "test"]'
+          fail-on: warning
+
